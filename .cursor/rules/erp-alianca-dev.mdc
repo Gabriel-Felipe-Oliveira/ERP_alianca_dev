@@ -1,0 +1,237 @@
+---
+description: Convenções obrigatórias do ERP Aliança Dev — arquitetura, auth, API, segurança e testes
+alwaysApply: true
+---
+
+# ERP Aliança Dev — Regras do Projeto
+
+## 1. Conformidade (obrigatório)
+
+- **Estas regras são mandatórias** para todo código novo e para refatorações tocadas pela tarefa.
+- **Não inventar padrão alternativo** (Repository, BLoC, GetX, chamada HTTP na View, etc.) sem pedido explícito do usuário.
+- **Desvio só com aprovação do usuário** — e, se virar padrão permanente, **atualizar este arquivo** no mesmo PR/commit.
+- Em dúvida entre atalho e convenção do projeto, **seguir a convenção**.
+- Responder sempre em **português**.
+
+---
+
+## 2. Visão geral
+
+- App Flutter **desktop-first** (Windows), pacote `erp_alianca_dev`.
+- **Login é obrigatório** — o app não opera sem sessão válida (exceto tela `/login`).
+- Base API: `AppConstants.baseUrl` → `https://aliancadev.com/estoque_vendas01/`.
+- Stack: **MVVM + Provider**, **GoRouter**, **Dio**, **SharedPreferences** (sessão).
+
+Fluxo de camadas:
+
+```
+View → ViewModel → Service → API
+         ↓
+    AuthService / EmpresaService (sessão e tenant)
+         ↓
+    DioClient (Bearer + id_empresa + refresh 401)
+```
+
+**Proibido:** camada Repository. **Proibido:** misturar responsabilidades entre camadas.
+
+---
+
+## 3. Autenticação e sessão
+
+### 3.1 Feature e arquivos
+
+| Responsabilidade | Local |
+|------------------|--------|
+| UI login | `features/login/view/login_view.dart` |
+| VM login | `features/login/viewmodel/login_viewmodel.dart` |
+| Models sessão/usuário | `features/login/model/` |
+| HTTP login/refresh/logout | `shared/services/auth_service.dart` |
+| Persistência tokens | `shared/services/auth_storage_service.dart` |
+| Guard de rotas | `routes/app_router.dart` (`refreshListenable: authService`) |
+| Tenant após login | `shared/services/empresa_service.dart` |
+
+### 3.2 Endpoints (auth)
+
+| Ação | Método | Path | Body / headers |
+|------|--------|------|----------------|
+| Login | POST | `api/login.php` | `{ email, senha, device_name }` |
+| Refresh | POST | `api/sessions.php` | `{ action: "refresh", refresh_token }` |
+| Logout | PATCH | `api/sessions.php` | `{ id_session }` + header `X-Access-Token` |
+
+- Login/refresh/logout usam **Dio dedicado** dentro de `AuthService` (sem interceptor de Bearer).
+- Demais APIs usam **`DioClient`** com `Authorization: Bearer` e `id_empresa` na query quando autenticado.
+
+### 3.3 Regras de auth
+
+- Sem sessão válida → redirect para `AppRoutes.login`.
+- Após login: persistir sessão, definir empresa via `EmpresaService.setEmpresa`, aplicar paleta.
+- Token expirado: tentar refresh; falha → `logoutLocal()` e voltar ao login.
+- **Nunca** logar `access_token`, `refresh_token` ou senha — usar `SanitizedDioLogger` + `SensitiveDataSanitizer`.
+- Limpar campo senha na UI após login bem-sucedido.
+- Credenciais de demo para testes **somente** em `test/helpers/test_auth_credentials.dart`.
+
+---
+
+## 4. Camadas
+
+### 4.1 View (`*_view.dart`)
+
+- Apenas widgets e composição.
+- Sem HTTP, sem parse JSON, sem bytes/layout PDF.
+- `Consumer` / `context.watch<VM>()` / `Selector` quando fizer sentido.
+- Validar formulários antes de chamar o ViewModel.
+- Extrair widgets grandes em `view/widgets/` (**meta: &lt; 300 linhas** por arquivo).
+
+### 4.2 ViewModel (`*_viewmodel.dart`)
+
+- Preferir `BaseViewModel` (`shared/viewmodels/base_view_model.dart`).
+- Negócio, estado (`ViewState`), chamadas a **Service**.
+- **Não** importar Dio nem paths de endpoint.
+- Verificar `isDisposed` antes de `notifyListeners()` após `await`.
+- Mixins compartilhados em `viewmodel/mixins/`.
+- PDF: orquestrar via `PdfExportService` + `shared/pdf/` — **não** montar layout PDF no VM.
+- Erros: preferir `on AppException catch` com mensagem amigável; evitar `catch (_)` silencioso.
+
+### 4.3 Service (`*_service.dart`)
+
+- Apenas HTTP (via `DioClient`) + parse com **`ApiResponseParser`**.
+- Receber `DioClient` no construtor.
+- Sem UI, sem `ChangeNotifier`, sem `BuildContext`.
+
+```dart
+class ExemploService {
+  ExemploService(this._dioClient);
+  final DioClient _dioClient;
+
+  Future<List<ExemploModel>> listar() async {
+    final response = await _dioClient.get<Object?>('api/exemplo.php');
+    return ApiResponseParser.parseList(
+      response.data,
+      ExemploModel.fromJson,
+    );
+  }
+}
+```
+
+**Exceção documentada:** `AuthService` concentra login/refresh/logout e estado de sessão (`ChangeNotifier`) — não duplicar lógica de auth em outros services.
+
+### 4.4 Model (`*_model.dart`)
+
+- `features/*/model/` ou `shared/models/` (cross-cutting).
+- `fromJson` / `toJson` tipados — **nunca `dynamic`**.
+- Sem regra de negócio e sem UI.
+
+---
+
+## 5. Estrutura de pastas
+
+```
+lib/
+├── core/           # network, errors, security, theme, constants, utils
+├── features/       # login, clientes, pedidos, produtos, romaneio, home, dashboard
+├── routes/         # app_router.dart, app_routes.dart
+├── shared/         # services, widgets, pdf, utils, theme, viewmodels
+└── main.dart
+```
+
+Por feature (`features/<nome>/`):
+
+- `view/`, `view/widgets/`, `viewmodel/`, `viewmodel/mixins/`, `model/`, `utils/`, `contracts/`
+
+### Services em `shared/services/`
+
+`AuthService`, `AuthStorageService`, `EmpresaService`, `ClienteService`, `ProdutoService`, `PedidoService`, `RomaneioService`, `DashboardService`, `CupomService`, `PdfExportService`, `CnpjConsultaService`, `LocalStorageService`.
+
+### Infra em `core/`
+
+- `network/dio_client.dart`, `network/sanitized_dio_logger.dart`, `network/api_response.dart`
+- `security/sensitive_data_sanitizer.dart`
+- `errors/app_exception.dart`
+
+---
+
+## 6. API backend (PHP)
+
+- REST PHP + MySQL; base em `AppConstants`.
+- **Nunca confiar** cegamente no retorno — validar com `ApiResponseParser` ou parse tipado (auth).
+- Tratar timeout e 5xx; mensagens ao usuário via `AppException` (sem stack trace / JSON cru).
+- Formato comum de negócio:
+
+```json
+{ "ok": true, "message": "...", "data": [] }
+```
+
+(`success` também é aceito pelo parser onde aplicável.)
+
+- Auth retorna envelope próprio (`ok`, `access_token`, `refresh_token`, `session`, `empresa`, `usuario`) — parse em `AuthSessionModel`.
+
+---
+
+## 7. Navegação (GoRouter)
+
+- Rotas centralizadas em `app_routes.dart` + `app_router.dart`.
+- **Preferência:** IDs na URL (`/clientes/detalhes/:id`).
+- **Exceções permitidas** (já usadas no app — não criar novas sem atualizar esta regra):
+  - `ClienteCriarExtra` → criar cliente vindo da consulta CNPJ
+  - `ClienteModel` → criar pedido com cliente pré-selecionado
+- Login em `/login`, fora do `DashboardShell`.
+- Listagens: ViewModels globais no `main.dart`. Telas de criar/editar/detalhe: VM por rota.
+
+---
+
+## 8. Segurança
+
+- Tokens em `SharedPreferences` via `AuthStorageService` (plaintext — migrar para secure storage só com decisão explícita).
+- Debug: logs HTTP **sanitizados** (`SanitizedDioLogger`); nunca `PrettyDioLogger` com body de auth.
+- `AppException.data` e `AppLogger.error` passam pelo sanitizador.
+- `AuthSessionModel.toString()` não expõe tokens completos.
+- Integrações públicas (Brasil API CNPJ): sem auth; tratar 404/timeout.
+
+---
+
+## 9. PDF
+
+- Layout/bytes: `shared/pdf/` (`romaneio_pdf`, `cupom_pdf`).
+- Preview/salvar: `PdfExportService` + `pdf_utils.dart`.
+- ViewModel orquestra; View só dispara ação e mostra toast.
+
+---
+
+## 10. UI, tema e listagens
+
+- Loading de conteúdo: **Shimmer** (não spinner solto em listagens).
+- Tema: `core/theme/` (ThemeData) + `shared/theme/` (tokens runtime `AppColors`, etc.).
+- Paginação: `?page=1&limit=20` na ViewModel; scroll infinito onde já existir padrão.
+- `const` quando possível; `final` por padrão; `async/await` (evitar `.then` encadeado).
+- Métodos privados com prefixo `_`.
+- **Meta:** arquivos &lt; 300 linhas — se passar, extrair widgets/mixins/helpers.
+
+---
+
+## 11. Testes
+
+```
+test/
+├── core/           # parser, errors, security
+├── features/       # viewmodels por feature
+├── shared/         # services, utils
+├── integration/    # API real (@Tags(['integration']))
+└── helpers/        # mocks e TestAuthCredentials
+```
+
+- **Unitários** (CI/local rápido): `flutter test test/shared test/features test/core test/widget_test.dart`
+- **Integração auth** (rede): `flutter test test/integration/login_api_integration_test.dart`
+- Novo Service de negócio: pelo menos 1 teste de parse/envelope.
+- Novo fluxo auth/sessão: testes em `auth_service_test.dart` ou integração.
+- Credenciais demo: `TestAuthCredentials` — nunca hardcodar senha em `lib/`.
+
+---
+
+## 12. Checklist antes de finalizar tarefa
+
+- [ ] Respeitou View → VM → Service?
+- [ ] Auth necessário? Bearer + `id_empresa` via `DioClient`?
+- [ ] Erros tratados com `AppException` / mensagem amigável?
+- [ ] Nada sensível em logs ou `toString`?
+- [ ] Testes atualizados ou justificativa clara?
+- [ ] Desvio da regra documentado e aprovado?

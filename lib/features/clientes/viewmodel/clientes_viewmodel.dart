@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:erp_alianca_dev/core/errors/app_exception.dart';
 import 'package:erp_alianca_dev/features/clientes/model/cliente_model.dart';
 import 'package:erp_alianca_dev/shared/models/base_state.dart';
 import 'package:erp_alianca_dev/shared/services/cliente_service.dart';
@@ -99,8 +100,16 @@ class ClientesViewModel extends BaseViewModel {
       if (isDisposed) return;
       _pagination.applyFirstPage(result, _clientesTodos);
       _setState(ViewState.success);
+    } on AppException catch (e) {
+      if (isDisposed) return;
+      _errorMessage = e.message;
+      _setState(ViewState.error);
     } catch (e) {
-      _errorMessage = 'Erro ao carregar clientes. Tente novamente.';
+      if (isDisposed) return;
+      _errorMessage = BaseViewModel.userMessage(
+        e,
+        'Erro ao carregar clientes. Tente novamente.',
+      );
       _setState(ViewState.error);
     }
   }
@@ -124,8 +133,8 @@ class ClientesViewModel extends BaseViewModel {
       );
       if (isDisposed) return;
       _pagination.applyNextPage(result, _clientesTodos);
-    } catch (_) {
-      // Mantém lista atual em erro de paginação
+    } catch (e) {
+      BaseViewModel.logFailure(e, tag: 'ClientesViewModel.loadMore');
     }
     _pagination.isLoadingMore = false;
     notifyListeners();
@@ -151,8 +160,12 @@ class ClientesViewModel extends BaseViewModel {
       if (isDisposed) return;
       _paginationBusca.applyFirstPage(result, _clientesBusca);
       _stateBusca = ViewState.success;
+    } on AppException catch (_) {
+      if (isDisposed) return;
+      _stateBusca = ViewState.error;
     } catch (e) {
       if (isDisposed) return;
+      BaseViewModel.logFailure(e, tag: 'ClientesViewModel.buscar');
       _stateBusca = ViewState.error;
     }
     notifyListeners();
@@ -179,7 +192,9 @@ class ClientesViewModel extends BaseViewModel {
       );
       if (isDisposed) return;
       _paginationBusca.applyNextPage(result, _clientesBusca);
-    } catch (_) {}
+    } catch (e) {
+      BaseViewModel.logFailure(e, tag: 'ClientesViewModel.loadMoreBusca');
+    }
     _paginationBusca.isLoadingMore = false;
     notifyListeners();
   }
@@ -212,8 +227,12 @@ class ClientesViewModel extends BaseViewModel {
       );
       if (isDisposed) return;
       _stateBusca = ViewState.success;
+    } on AppException catch (_) {
+      if (isDisposed) return;
+      _stateBusca = ViewState.error;
     } catch (e) {
       if (isDisposed) return;
+      BaseViewModel.logFailure(e, tag: 'ClientesViewModel.carregarSelecao');
       _stateBusca = ViewState.error;
     }
     notifyListeners();

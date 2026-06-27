@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:erp_alianca_dev/core/config/api_config.dart';
+import 'package:erp_alianca_dev/core/errors/app_exception.dart';
 import 'package:erp_alianca_dev/core/network/api_response.dart';
 import 'package:erp_alianca_dev/core/network/dio_client.dart';
 import 'package:erp_alianca_dev/core/constants/pagination_constants.dart';
@@ -89,7 +90,7 @@ class ProdutoService {
     bool allowEmptyResponseOnSuccess = false,
   }) async {
     if (produto.idProduto == null) {
-      throw Exception('Produto sem id para atualização.');
+      throw const AppException(message: 'Produto sem id para atualização.');
     }
     final response = await _dioClient.put<Map<String, dynamic>>(
       _pathProdutos,
@@ -149,7 +150,7 @@ class ProdutoService {
           ApiConfig.isSuccessStatusCode(response.statusCode)) {
         return 0;
       }
-      throw Exception('Resposta inválida da API');
+      throw const AppException(message: 'Resposta inválida da API');
     }
 
     ApiResponseParser.requireOk(
@@ -159,8 +160,8 @@ class ProdutoService {
 
     final idProduto = data['id_produto'];
     if (idProduto == null) {
-      throw Exception(
-        ApiResponseParser.message(data) ?? 'Erro ao criar produto',
+      throw AppException(
+        message: ApiResponseParser.message(data) ?? 'Erro ao criar produto',
       );
     }
     return idProduto is int ? idProduto : int.parse(idProduto.toString());

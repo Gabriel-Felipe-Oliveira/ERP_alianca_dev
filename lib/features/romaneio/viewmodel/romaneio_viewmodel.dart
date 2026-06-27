@@ -1,3 +1,4 @@
+import 'package:erp_alianca_dev/core/errors/app_exception.dart';
 import 'package:erp_alianca_dev/features/romaneio/model/romaneio_model.dart';
 import 'package:erp_alianca_dev/shared/models/base_state.dart';
 import 'package:erp_alianca_dev/shared/services/romaneio_service.dart';
@@ -86,9 +87,16 @@ class RomaneioViewModel extends BaseViewModel {
         _pagination.applyFirstPage(result, _romaneios);
       }
       _state = ViewState.success;
-    } catch (_) {
+    } on AppException catch (e) {
       if (isDisposed) return;
-      _errorMessage = 'Erro ao carregar romaneios. Tente novamente.';
+      _errorMessage = e.message;
+      _state = ViewState.error;
+    } catch (e) {
+      if (isDisposed) return;
+      _errorMessage = BaseViewModel.userMessage(
+        e,
+        'Erro ao carregar romaneios. Tente novamente.',
+      );
       _state = ViewState.error;
     }
     notifyListeners();
@@ -119,7 +127,9 @@ class RomaneioViewModel extends BaseViewModel {
         ..page = result.page
         ..hasMore = result.hasMore
         ..total = result.total;
-    } catch (_) {}
+    } catch (e) {
+      BaseViewModel.logFailure(e, tag: 'RomaneioViewModel.loadMore');
+    }
     _pagination.isLoadingMore = false;
     notifyListeners();
   }

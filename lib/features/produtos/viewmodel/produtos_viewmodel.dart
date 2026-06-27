@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:erp_alianca_dev/core/errors/app_exception.dart';
 import 'package:erp_alianca_dev/features/produtos/model/produto_model.dart';
 import 'package:erp_alianca_dev/shared/models/base_state.dart';
 import 'package:erp_alianca_dev/shared/services/produto_service.dart';
@@ -65,9 +66,16 @@ class ProdutosViewModel extends BaseViewModel {
       if (isDisposed) return;
       _pagination.applyFirstPage(result, _produtosTodos);
       _state = ViewState.success;
-    } catch (_) {
+    } on AppException catch (e) {
       if (isDisposed) return;
-      _errorMessage = 'Erro ao carregar produtos. Tente novamente.';
+      _errorMessage = e.message;
+      _state = ViewState.error;
+    } catch (e) {
+      if (isDisposed) return;
+      _errorMessage = BaseViewModel.userMessage(
+        e,
+        'Erro ao carregar produtos. Tente novamente.',
+      );
       _state = ViewState.error;
     }
     notifyListeners();
@@ -89,7 +97,9 @@ class ProdutosViewModel extends BaseViewModel {
       );
       if (isDisposed) return;
       _pagination.applyNextPage(result, _produtosTodos);
-    } catch (_) {}
+    } catch (e) {
+      BaseViewModel.logFailure(e, tag: 'ProdutosViewModel.loadMore');
+    }
     _pagination.isLoadingMore = false;
     notifyListeners();
   }
@@ -108,8 +118,12 @@ class ProdutosViewModel extends BaseViewModel {
       if (isDisposed) return;
       _paginationBusca.applyFirstPage(result, _produtosBusca);
       _stateBusca = ViewState.success;
-    } catch (_) {
+    } on AppException catch (_) {
       if (isDisposed) return;
+      _stateBusca = ViewState.error;
+    } catch (e) {
+      if (isDisposed) return;
+      BaseViewModel.logFailure(e, tag: 'ProdutosViewModel.buscar');
       _stateBusca = ViewState.error;
     }
     notifyListeners();

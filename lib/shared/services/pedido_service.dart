@@ -1,4 +1,5 @@
 import 'package:erp_alianca_dev/core/config/api_config.dart';
+import 'package:erp_alianca_dev/core/errors/app_exception.dart';
 import 'package:erp_alianca_dev/core/network/api_response.dart';
 import 'package:erp_alianca_dev/core/network/dio_client.dart';
 import 'package:erp_alianca_dev/core/constants/pagination_constants.dart';
@@ -107,12 +108,12 @@ class PedidoService {
           ApiConfig.isSuccessStatusCode(response.statusCode)) {
         return 0;
       }
-      throw Exception('Resposta inválida ao criar pedido.');
+      throw AppException(message:'Resposta inválida ao criar pedido.');
     }
     final idPedido = PedidoCriarPayload.idPedidoFromResponse(data);
     if (idPedido == null) {
-      throw Exception(
-        (data['message'] is String)
+      throw AppException(
+        message: (data['message'] is String)
             ? data['message'] as String
             : 'Resposta inválida ao criar pedido.',
       );
@@ -167,7 +168,7 @@ class PedidoService {
           ApiConfig.isSuccessStatusCode(response.statusCode)) {
         return;
       }
-      throw Exception('Resposta inválida ao alterar status.');
+      throw AppException(message:'Resposta inválida ao alterar status.');
     }
     ApiResponseParser.requireOk(
       data,
@@ -219,7 +220,7 @@ class PedidoService {
           ApiConfig.isSuccessStatusCode(response.statusCode)) {
         return 0;
       }
-      throw Exception('Resposta inválida ao arquivar pedido.');
+      throw AppException(message:'Resposta inválida ao arquivar pedido.');
     }
     ApiResponseParser.requireOk(
       data,
@@ -253,7 +254,7 @@ class PedidoService {
           ApiConfig.isSuccessStatusCode(response.statusCode)) {
         return;
       }
-      throw Exception('Resposta inválida ao adicionar item.');
+      throw AppException(message:'Resposta inválida ao adicionar item.');
     }
     ApiResponseParser.requireOk(
       data,
@@ -284,7 +285,7 @@ class PedidoService {
           ApiConfig.isSuccessStatusCode(response.statusCode)) {
         return;
       }
-      throw Exception('Resposta inválida ao remover item.');
+      throw AppException(message:'Resposta inválida ao remover item.');
     }
     ApiResponseParser.requireOk(
       data,
@@ -323,7 +324,7 @@ class PedidoService {
           ApiConfig.isSuccessStatusCode(response.statusCode)) {
         return;
       }
-      throw Exception('Resposta inválida ao atualizar quantidade.');
+      throw AppException(message:'Resposta inválida ao atualizar quantidade.');
     }
     ApiResponseParser.requireOk(
       data,

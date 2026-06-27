@@ -4,7 +4,8 @@ import 'package:erp_alianca_dev/shared/models/empresa_model.dart';
 import 'package:erp_alianca_dev/shared/services/local_storage_service.dart';
 import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
 
-/// Id da empresa padrão desta linha congelada do produto (sem login).
+/// Id da empresa mock usada **apenas** antes do login (paleta/tema inicial).
+/// Após autenticação, [setEmpresa] substitui pelo tenant da sessão.
 const int kDefaultIdEmpresa = 3;
 
 /// Serviço que mantém a empresa atual da sessão.

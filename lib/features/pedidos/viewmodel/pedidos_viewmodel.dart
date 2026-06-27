@@ -1,3 +1,4 @@
+import 'package:erp_alianca_dev/core/errors/app_exception.dart';
 import 'package:erp_alianca_dev/features/pedidos/model/pedido_model.dart';
 import 'package:erp_alianca_dev/shared/models/base_state.dart';
 import 'package:erp_alianca_dev/shared/services/cliente_service.dart';
@@ -57,8 +58,12 @@ class PedidosViewModel extends BaseViewModel {
           final cliente = await _clienteService.buscarClientePorId(id);
           if (isDisposed) return;
           _nomesClientes[id] = cliente.nome;
-        } catch (_) {
+        } on AppException catch (_) {
           if (isDisposed) return;
+          _nomesClientes[id] = '—';
+        } catch (e) {
+          if (isDisposed) return;
+          BaseViewModel.logFailure(e, tag: 'PedidosViewModel.nomeCliente');
           _nomesClientes[id] = '—';
         }
       }),
@@ -92,9 +97,16 @@ class PedidosViewModel extends BaseViewModel {
       await _resolverNomesClientes(idsCliente);
 
       _state = ViewState.success;
-    } catch (_) {
+    } on AppException catch (e) {
       if (isDisposed) return;
-      _errorMessage = 'Erro ao carregar pedidos. Tente novamente.';
+      _errorMessage = e.message;
+      _state = ViewState.error;
+    } catch (e) {
+      if (isDisposed) return;
+      _errorMessage = BaseViewModel.userMessage(
+        e,
+        'Erro ao carregar pedidos. Tente novamente.',
+      );
       _state = ViewState.error;
     }
     notifyListeners();
@@ -127,7 +139,9 @@ class PedidosViewModel extends BaseViewModel {
           .where((id) => id > 0)
           .toSet();
       await _resolverNomesClientes(idsCliente);
-    } catch (_) {}
+    } catch (e) {
+      BaseViewModel.logFailure(e, tag: 'PedidosViewModel.loadMore');
+    }
     _pagination.isLoadingMore = false;
     notifyListeners();
   }

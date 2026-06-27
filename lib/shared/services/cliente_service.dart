@@ -87,7 +87,7 @@ class ClienteService {
         options: Options(responseType: ResponseType.plain),
       );
       if (!ApiConfig.isSuccessStatusCode(response.statusCode)) {
-        throw Exception('Erro ao criar cliente.');
+        throw const AppException(message: 'Erro ao criar cliente.');
       }
     } on AppException catch (e) {
       if (e.statusCode != null && ApiConfig.isSuccessStatusCode(e.statusCode)) {
@@ -103,7 +103,7 @@ class ClienteService {
     bool allowEmptyResponseOnSuccess = false,
   }) async {
     if (cliente.id == null) {
-      throw Exception('Cliente sem id para atualização.');
+      throw const AppException(message: 'Cliente sem id para atualização.');
     }
     final response = await _dioClient.put<Map<String, dynamic>>(
       'api/clientes.php',

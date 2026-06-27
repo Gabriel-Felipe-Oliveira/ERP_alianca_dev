@@ -50,8 +50,13 @@ class HomeViewModel extends BaseViewModel {
       _maiorPedido = '—';
     } on AppException catch (e) {
       if (!isDisposed) _errorMessage = e.message;
-    } catch (_) {
-      if (!isDisposed) _errorMessage = 'Erro ao carregar dados.';
+    } catch (e) {
+      if (!isDisposed) {
+        _errorMessage = BaseViewModel.userMessage(
+          e,
+          'Erro ao carregar dados.',
+        );
+      }
     } finally {
       _isLoading = false;
       if (!isDisposed) notifyListeners();

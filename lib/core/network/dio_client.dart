@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:erp_alianca_dev/core/constants/app_constants.dart';
 import 'package:erp_alianca_dev/core/errors/app_exception.dart';
 import 'package:erp_alianca_dev/core/network/sanitized_dio_logger.dart';
-import 'package:erp_alianca_dev/core/utils/app_logger.dart';
 import 'package:erp_alianca_dev/shared/services/auth_service.dart';
 import 'package:erp_alianca_dev/shared/services/empresa_service.dart';
 
@@ -40,18 +39,9 @@ class DioClient {
             params['id_empresa'] = _empresaService.idEmpresa;
             options.queryParameters = params;
           }
-          AppLogger.debug(
-            '${options.method} ${options.uri}',
-            tag: 'DioClient',
-          );
           return handler.next(options);
         },
         onError: (error, handler) async {
-          AppLogger.error(
-            'Erro na requisição: ${error.requestOptions.uri}',
-            error: error.message,
-          );
-
           if (error.response?.statusCode == 401 &&
               _authService.isAuthenticated) {
             final refreshed = await _authService.tryRefreshAccessToken();
