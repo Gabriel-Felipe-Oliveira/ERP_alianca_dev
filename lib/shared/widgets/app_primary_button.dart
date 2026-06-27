@@ -1,18 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
+import 'package:erp_alianca_dev/shared/theme/app_radius.dart';
 import 'package:erp_alianca_dev/shared/theme/app_spacing.dart';
 import 'package:erp_alianca_dev/shared/theme/app_text_styles.dart';
 
 /// Botão primário padronizado do Design System.
-/// Se [onPressed] for null e [onDisabledTap] for informado, o botão permanece
-/// visualmente desativado mas responde ao toque chamando [onDisabledTap]
-/// (ex.: exibir quais campos faltam preencher).
 class AppPrimaryButton extends StatelessWidget {
-  final String label;
-  final VoidCallback? onPressed;
-  final VoidCallback? onDisabledTap;
-  final bool isLoading;
-
   const AppPrimaryButton({
     super.key,
     required this.label,
@@ -21,7 +14,13 @@ class AppPrimaryButton extends StatelessWidget {
     this.isLoading = false,
   });
 
+  final String label;
+  final VoidCallback? onPressed;
+  final VoidCallback? onDisabledTap;
+  final bool isLoading;
+
   bool get _enabled => onPressed != null;
+
   VoidCallback? get _effectiveOnPressed {
     if (isLoading) return null;
     if (onPressed != null) return onPressed;
@@ -40,6 +39,10 @@ class AppPrimaryButton extends StatelessWidget {
               if (!_enabled || states.contains(WidgetState.disabled)) {
                 return AppColors.sidebarItemBackground;
               }
+              if (states.contains(WidgetState.hovered) &&
+                  AppColors.isLightTheme) {
+                return AppColors.primaryHover;
+              }
               return AppColors.primary;
             },
           ),
@@ -48,13 +51,15 @@ class AppPrimaryButton extends StatelessWidget {
               if (!_enabled || states.contains(WidgetState.disabled)) {
                 return AppColors.textSecondary;
               }
-              return AppColors.textPrimary;
+              return AppColors.isLightTheme
+                  ? Colors.white
+                  : AppColors.textPrimary;
             },
           ),
           overlayColor: WidgetStateProperty.resolveWith<Color?>(
             (Set<WidgetState> states) {
               if (states.contains(WidgetState.hovered)) {
-                return AppColors.textPrimary.withValues(alpha: 0.12);
+                return Colors.white.withValues(alpha: 0.12);
               }
               return null;
             },
@@ -67,7 +72,7 @@ class AppPrimaryButton extends StatelessWidget {
           ),
           shape: WidgetStateProperty.all(
             RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppSpacing.inputBorderRadius),
+              borderRadius: BorderRadius.circular(AppRadius.button),
             ),
           ),
         ),
@@ -77,12 +82,22 @@ class AppPrimaryButton extends StatelessWidget {
                 height: 24,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.textPrimary),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    AppColors.isLightTheme
+                        ? Colors.white
+                        : AppColors.textPrimary,
+                  ),
                 ),
               )
             : Text(
                 label,
-                style: AppTextStyles.button,
+                style: AppTextStyles.button.copyWith(
+                  color: _enabled
+                      ? (AppColors.isLightTheme
+                          ? Colors.white
+                          : AppColors.textPrimary)
+                      : AppColors.textSecondary,
+                ),
               ),
       ),
     );

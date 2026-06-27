@@ -12,6 +12,7 @@ import 'package:erp_alianca_dev/shared/theme/app_text_styles.dart';
 import 'package:erp_alianca_dev/shared/widgets/app_form_container.dart';
 import 'package:erp_alianca_dev/shared/widgets/app_primary_button.dart';
 import 'package:erp_alianca_dev/shared/widgets/app_text_field.dart';
+import 'package:erp_alianca_dev/shared/widgets/app_toast.dart';
 
 class ClienteConsultaCnpjView extends StatelessWidget {
   const ClienteConsultaCnpjView({super.key});
@@ -21,7 +22,14 @@ class ClienteConsultaCnpjView extends StatelessWidget {
     ClienteConsultaCnpjViewModel vm,
   ) async {
     final dados = await vm.consultar();
-    if (!context.mounted || dados == null) return;
+    if (!context.mounted) return;
+    if (dados == null) {
+      final msg = vm.errorMessage;
+      if (msg != null && msg.isNotEmpty) {
+        showAppError(context, message: msg);
+      }
+      return;
+    }
 
     context.go(
       AppRoutes.clientesCriar,
@@ -76,16 +84,6 @@ class ClienteConsultaCnpjView extends StatelessWidget {
                             controller: vm.cnpjController,
                             type: AppInputType.cnpj,
                           ),
-                          if (vm.state == ViewState.error &&
-                              vm.errorMessage != null) ...[
-                            const SizedBox(height: AppSpacing.md),
-                            Text(
-                              vm.errorMessage!,
-                              style: AppTextStyles.bodySmall.copyWith(
-                                color: AppColors.error,
-                              ),
-                            ),
-                          ],
                           const SizedBox(height: AppSpacing.lg),
                           AppPrimaryButton(
                             label: carregando ? 'Buscando...' : 'Buscar',
@@ -93,9 +91,6 @@ class ClienteConsultaCnpjView extends StatelessWidget {
                             onPressed: vm.podeConsultar
                                 ? () => _consultar(context, vm)
                                 : null,
-                            onDisabledTap: vm.podeConsultar
-                                ? null
-                                : () => _consultar(context, vm),
                           ),
                         ],
                       ),

@@ -80,8 +80,9 @@ class PedidoSelecaoProdutoLinha extends StatelessWidget {
                       style: AppTextStyles.bodyMedium.copyWith(
                         color: nomeColor,
                         fontWeight: FontWeight.w600,
-                        fontSize: 14,
+                        fontSize: 13,
                       ),
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 1),

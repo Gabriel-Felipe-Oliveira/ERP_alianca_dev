@@ -1,8 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:erp_alianca_dev/core/theme/empresa_palettes.dart';
 import 'package:erp_alianca_dev/shared/models/empresa_model.dart';
 import 'package:erp_alianca_dev/shared/services/local_storage_service.dart';
-import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
 
 /// Id da empresa mock usada **apenas** antes do login (paleta/tema inicial).
 /// Após autenticação, [setEmpresa] substitui pelo tenant da sessão.
@@ -61,7 +59,6 @@ class EmpresaService extends ChangeNotifier {
       createdAt: _current.createdAt,
       updatedAt: _current.updatedAt,
     );
-    _applyPalette(id);
     notifyListeners();
   }
 
@@ -69,7 +66,6 @@ class EmpresaService extends ChangeNotifier {
   Future<void> setEmpresa(EmpresaModel empresa, LocalStorageService storage) async {
     _current = empresa;
     await storage.saveIdEmpresa(empresa.idEmpresa);
-    _applyPalette(empresa.idEmpresa);
     notifyListeners();
   }
 
@@ -98,7 +94,6 @@ class EmpresaService extends ChangeNotifier {
       updatedAt: _current.updatedAt,
     );
     await storage.saveIdEmpresa(id);
-    _applyPalette(id);
     notifyListeners();
   }
 
@@ -106,11 +101,6 @@ class EmpresaService extends ChangeNotifier {
   Future<void> clearSession(LocalStorageService storage) async {
     _current = _empresaMock;
     await storage.clearIdEmpresa();
-    _applyPalette(_current.idEmpresa);
     notifyListeners();
-  }
-
-  void _applyPalette(int id) {
-    AppColors.setCurrent(EmpresaPalettes.getById(id));
   }
 }

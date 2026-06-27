@@ -23,9 +23,11 @@ class ListagemListCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.card,
           borderRadius: BorderRadius.circular(AppSpacing.listagemCardBorderRadius),
+          border: Border.all(color: AppColors.cardBorder, width: 1),
+          boxShadow: AppColors.isLightTheme ? AppColors.cardBoxShadow : null,
         ),
         child: Padding(
-          padding: padding ?? const EdgeInsets.all(AppSpacing.md),
+          padding: padding ?? const EdgeInsets.all(AppSpacing.lg),
           child: child,
         ),
       ),
@@ -73,7 +75,9 @@ class _ListagemListItemState extends State<ListagemListItem> {
   bool _hovering = false;
 
   BoxDecoration _buildDecoration() {
-    final baseColor = _hovering ? AppColors.listagemItemHover : AppColors.listagemItemBackground;
+    final baseColor = _hovering
+        ? AppColors.listagemItemHover
+        : AppColors.listagemItemBackground;
 
     if (widget.variant == ListagemListItemVariant.searchResult) {
       return BoxDecoration(
@@ -103,6 +107,9 @@ class _ListagemListItemState extends State<ListagemListItem> {
     return BoxDecoration(
       color: baseColor,
       borderRadius: BorderRadius.circular(AppSpacing.listagemItemBorderRadius),
+      border: AppColors.isLightTheme && _hovering
+          ? Border.all(color: AppColors.cardBorder, width: 1)
+          : null,
     );
   }
 

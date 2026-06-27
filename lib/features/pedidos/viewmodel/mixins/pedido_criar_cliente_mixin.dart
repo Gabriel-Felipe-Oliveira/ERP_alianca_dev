@@ -79,7 +79,15 @@ mixin PedidoCriarClienteMixin on ChangeNotifier {
     selecionarCliente(c);
   }
 
-  /// Carrega todos os clientes ativos (API sem q). Chamado ao clicar/focar na barra.
+  /// Prepara o modal de seleção: limpa a busca anterior e carrega a lista.
+  Future<void> iniciarModalSelecaoCliente() async {
+    _timerBuscaCliente?.cancel();
+    _timerBuscaCliente = null;
+    clienteQueryController.clear();
+    await carregarListaClientes();
+  }
+
+  /// Carrega todos os clientes ativos (API sem q).
   Future<void> carregarListaClientes() async {
     if (isVmDisposed) return;
     _hasSearchedCliente = true;

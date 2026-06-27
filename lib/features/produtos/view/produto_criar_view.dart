@@ -13,6 +13,7 @@ import 'package:erp_alianca_dev/shared/widgets/app_dropdown_field.dart';
 import 'package:erp_alianca_dev/shared/widgets/app_form_container.dart';
 import 'package:erp_alianca_dev/shared/widgets/app_primary_button.dart';
 import 'package:erp_alianca_dev/shared/widgets/app_section_title.dart';
+import 'package:erp_alianca_dev/shared/widgets/form_section_icon_header.dart';
 import 'package:erp_alianca_dev/shared/widgets/app_text_field.dart';
 import 'package:erp_alianca_dev/shared/widgets/app_toast.dart';
 import 'package:erp_alianca_dev/shared/widgets/section_header.dart';
@@ -51,7 +52,7 @@ class _ProdutoCriarViewState extends State<ProdutoCriarView> {
                 children: [
                   SectionHeader(
                     title: 'Criar Produto',
-                    description: 'Preencha os dados para cadastrar um novo produto.',
+                    icon: Icons.inventory_2_outlined,
                     onBack: () => context.go(AppRoutes.produtos),
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -62,7 +63,10 @@ class _ProdutoCriarViewState extends State<ProdutoCriarView> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const AppSectionTitle(title: 'Dados do Produto'),
+                          const FormSectionIconHeader(
+                            title: 'Dados do Produto',
+                            icon: Icons.inventory_2_outlined,
+                          ),
                           AppTextField(
                             label: 'Nome',
                             controller: vm.nomeController,
@@ -143,7 +147,13 @@ class _ProdutoCriarViewState extends State<ProdutoCriarView> {
     if (sucesso) {
       await context.read<ProdutosViewModel>().loadProdutos();
       if (!context.mounted) return;
+      showAppSuccess(context, message: 'Produto criado com sucesso.');
       context.go(AppRoutes.produtos);
+      return;
+    }
+    final msg = vm.errorMessage;
+    if (msg != null && msg.isNotEmpty) {
+      showAppError(context, message: msg);
     }
   }
 

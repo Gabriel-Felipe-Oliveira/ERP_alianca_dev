@@ -13,7 +13,7 @@ abstract class AppRadius {
   static const double button = 12;
 
   /// Inputs (TextField, Dropdown).
-  static const double input = 10;
+  static const double input = 12;
 
   /// Elementos pequenos (ícone botão, badge).
   static const double small = 8;

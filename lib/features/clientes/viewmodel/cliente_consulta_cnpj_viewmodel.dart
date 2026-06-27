@@ -27,12 +27,7 @@ class ClienteConsultaCnpjViewModel extends BaseViewModel {
       cnpjDigits.length == 14 && _state != ViewState.loading;
 
   Future<CnpjConsultaModel?> consultar() async {
-    if (!podeConsultar) {
-      _errorMessage = 'Informe um CNPJ completo (14 dígitos).';
-      _state = ViewState.error;
-      notifyListeners();
-      return null;
-    }
+    if (!podeConsultar) return null;
 
     _state = ViewState.loading;
     _errorMessage = null;

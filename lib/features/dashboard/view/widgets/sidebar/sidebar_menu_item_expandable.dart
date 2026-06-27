@@ -1,26 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
 import 'package:erp_alianca_dev/features/dashboard/view/widgets/sidebar/sidebar_constants.dart';
+import 'package:erp_alianca_dev/features/dashboard/view/widgets/sidebar/sidebar_interactive.dart';
+import 'package:erp_alianca_dev/features/dashboard/view/widgets/sidebar/sidebar_item_colors.dart';
+import 'package:erp_alianca_dev/features/dashboard/view/widgets/sidebar/sidebar_simple_menu_item.dart';
 import 'package:erp_alianca_dev/features/dashboard/view/widgets/sidebar/sidebar_sub_item.dart';
 import 'package:erp_alianca_dev/features/dashboard/view/widgets/sidebar/sidebar_sub_items_connector.dart';
 
 /// Item expansível da sidebar (com subseções).
-/// Exibe o item principal e, quando expandido, lista os subitens com conectores.
 class SidebarMenuItemExpandable extends StatefulWidget {
-  final IconData icon;
-  final String title;
-  final String baseRoute;
-  final String currentLocation;
-  final VoidCallback onTapBase;
-
-  /// Ao segurar (long-press) com a seção aberta: fecha e vai para Home.
-  final VoidCallback? onLongPressBase;
-
-  final List<SidebarSubItem> subItems;
-
-  /// Se definido, força a seção a colapsar (usado para animação sequencial).
-  final String? collapsingSection;
-
   const SidebarMenuItemExpandable({
     super.key,
     required this.icon,
@@ -31,7 +20,18 @@ class SidebarMenuItemExpandable extends StatefulWidget {
     required this.subItems,
     this.onLongPressBase,
     this.collapsingSection,
+    this.isCollapsed = false,
   });
+
+  final IconData icon;
+  final String title;
+  final String baseRoute;
+  final String currentLocation;
+  final VoidCallback onTapBase;
+  final VoidCallback? onLongPressBase;
+  final List<SidebarSubItem> subItems;
+  final String? collapsingSection;
+  final bool isCollapsed;
 
   @override
   State<SidebarMenuItemExpandable> createState() =>
@@ -41,29 +41,86 @@ class SidebarMenuItemExpandable extends StatefulWidget {
 class _SidebarMenuItemExpandableState extends State<SidebarMenuItemExpandable> {
   bool _isHovered = false;
 
-  /// Expandido = rota ativa E não está sendo forçado a colapsar
   bool get _isExpanded =>
+      !widget.isCollapsed &&
       widget.currentLocation.startsWith(widget.baseRoute) &&
       widget.baseRoute != widget.collapsingSection;
 
-  Color get _textColor {
-    if (_isExpanded) return AppColors.sidebarTextActive;
-    if (_isHovered) return AppColors.sidebarTextHover;
-    return AppColors.sidebarTextMuted;
+  bool get _isActive =>
+      widget.currentLocation.startsWith(widget.baseRoute);
+
+  Color get _textColor => SidebarItemColors.textColor(
+        isSelected: _isActive,
+        isHovered: _isHovered,
+      );
+
+  Color get _iconColor => SidebarItemColors.iconColor(
+        isSelected: _isActive,
+        isHovered: _isHovered,
+      );
+
+  void _onTapCollapsed() {
+    context.go(widget.baseRoute);
   }
 
   @override
   Widget build(BuildContext context) {
+    if (widget.isCollapsed) {
+      return SidebarCollapsedIconTile(
+        icon: widget.icon,
+        label: widget.title,
+        isSelected: _isActive,
+        iconColor: _iconColor,
+        onTap: _onTapCollapsed,
+        onHoverChanged: (hovered) => setState(() => _isHovered = hovered),
+      );
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: SidebarConstants.menuItemMarginBottom),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.zero,
-      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildMainItem(),
+          SidebarInteractiveTile(
+            isSelected: _isExpanded,
+            isHovered: _isHovered,
+            onHoverChanged: (hovered) => setState(() => _isHovered = hovered),
+            onTap: widget.onTapBase,
+            onLongPress: _isExpanded ? widget.onLongPressBase : null,
+            marginBottom: 0,
+            child: Row(
+              children: [
+                Icon(
+                  widget.icon,
+                  color: _iconColor,
+                  size: SidebarLayout.iconSize,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    widget.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: _textColor,
+                      fontWeight: SidebarItemColors.textWeight(_isExpanded),
+                      fontSize: 14,
+                      letterSpacing: -0.02,
+                    ),
+                  ),
+                ),
+                if (_isExpanded)
+                  Icon(
+                    Icons.keyboard_arrow_up,
+                    color: _isHovered
+                        ? AppColors.sidebarTextHover
+                        : AppColors.sidebarTextMuted,
+                    size: 18,
+                  ),
+              ],
+            ),
+          ),
           AnimatedSize(
             duration: SidebarConstants.expandAnimationDuration,
             curve: SidebarConstants.expandAnimationCurve,
@@ -90,61 +147,6 @@ class _SidebarMenuItemExpandableState extends State<SidebarMenuItemExpandable> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildMainItem() {
-    return Container(
-      decoration: BoxDecoration(
-        color: _isExpanded ? AppColors.sidebarDivider : null,
-        borderRadius: BorderRadius.zero,
-        border: Border(
-          left: BorderSide(
-            color: _isExpanded ? AppColors.primary : Colors.transparent,
-            width: _isExpanded ? 3 : 0,
-          ),
-        ),
-      ),
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _isHovered = true),
-        onExit: (_) => setState(() => _isHovered = false),
-        cursor: SystemMouseCursors.click,
-        child: ListTile(
-          dense: true,
-          visualDensity: const VisualDensity(vertical: -3),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: SidebarConstants.itemContentPaddingHorizontal,
-            vertical: SidebarConstants.itemContentPaddingVertical,
-          ),
-          leading: Icon(
-            widget.icon,
-            color: _textColor,
-            size: 20,
-          ),
-          title: Text(
-            widget.title,
-            style: TextStyle(
-              color: _textColor,
-              fontWeight: _isExpanded ? FontWeight.w600 : FontWeight.w500,
-              fontSize: 14,
-              letterSpacing: -0.02,
-            ),
-          ),
-          trailing: _isExpanded
-              ? Icon(
-                  Icons.keyboard_arrow_up,
-                  color:
-                      _isHovered ? AppColors.sidebarTextHover : AppColors.sidebarTextMuted,
-                  size: 16,
-                )
-              : null,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.zero,
-          ),
-          onTap: widget.onTapBase,
-          onLongPress: _isExpanded ? widget.onLongPressBase : null,
-        ),
       ),
     );
   }

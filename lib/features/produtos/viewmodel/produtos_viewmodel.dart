@@ -33,6 +33,7 @@ class ProdutosViewModel extends BaseViewModel {
   bool get hasSearched => _hasSearched;
   ViewState get stateBusca => _stateBusca;
   int get totalProdutos => _pagination.total;
+  int get totalBusca => _paginationBusca.total;
   bool get hasMoreProdutos => _pagination.hasMore;
   bool get isLoadingMoreProdutos => _pagination.isLoadingMore;
   bool get hasMoreBusca => _paginationBusca.hasMore;
@@ -126,6 +127,31 @@ class ProdutosViewModel extends BaseViewModel {
       BaseViewModel.logFailure(e, tag: 'ProdutosViewModel.buscar');
       _stateBusca = ViewState.error;
     }
+    notifyListeners();
+  }
+
+  Future<void> loadMoreBusca() async {
+    if (!_paginationBusca.hasMore || _paginationBusca.isLoadingMore) return;
+    _paginationBusca.isLoadingMore = true;
+    notifyListeners();
+    try {
+      if (_paginationBusca.loadMoreFromCache(_produtosBusca)) {
+        if (isDisposed) return;
+        _paginationBusca.isLoadingMore = false;
+        notifyListeners();
+        return;
+      }
+      final q = _query.trim().isEmpty ? null : _query.trim();
+      final result = await _produtoService.listarPaginado(
+        page: _paginationBusca.page + 1,
+        q: q,
+      );
+      if (isDisposed) return;
+      _paginationBusca.applyNextPage(result, _produtosBusca);
+    } catch (e) {
+      BaseViewModel.logFailure(e, tag: 'ProdutosViewModel.loadMoreBusca');
+    }
+    _paginationBusca.isLoadingMore = false;
     notifyListeners();
   }
 

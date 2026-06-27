@@ -96,6 +96,14 @@ class _ClientTileState extends State<ClientTile> {
                   ? AppColors.listagemItemHover
                   : AppColors.listagemItemBackground,
               borderRadius: BorderRadius.circular(AppRadius.tile),
+              border: AppColors.isLightTheme && _highlight
+                  ? Border.all(
+                      color: _focused
+                          ? AppColors.listagemItemSelectedBorder
+                          : AppColors.cardBorder,
+                      width: 1,
+                    )
+                  : null,
             ),
             child: Material(
               color: Colors.transparent,

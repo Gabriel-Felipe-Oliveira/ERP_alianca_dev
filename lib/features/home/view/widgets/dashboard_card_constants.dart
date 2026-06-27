@@ -1,49 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
+import 'package:erp_alianca_dev/shared/theme/app_spacing.dart';
 
 /// Constantes visuais e de layout do [DashboardCard].
 class DashboardCardConstants {
   DashboardCardConstants._();
 
-  static const double cardRadius = 18;
+  static const double cardRadius = 16;
   static const double minWidth = 120;
   static const double minHeight = 100;
-  static const double padding = 28;
+  static const double padding = 24;
   static const double iconSize = 30;
   static const double spaceBelowIcon = 12;
-
-  /// Altura fixa da área do título (para ele não se deslocar quando o valor escala).
   static const double titleAreaHeight = 44;
-
-  /// Abaixo desse tamanho (área interna do card), mostra só o ícone centralizado.
   static const double minWidthForFullContent = 140;
   static const double minHeightForFullContent = 80;
-  static const double hoverScale = 1.03;
+  static const double hoverScale = 1.01;
   static const Duration hoverDuration = Duration(milliseconds: 200);
 
-  static BoxDecoration get decoration => BoxDecoration(
-        color: Colors.white,
+  static BoxDecoration decoration({bool hovering = false}) => BoxDecoration(
+        color: hovering && AppColors.isLightTheme
+            ? AppColors.cardHoverBackground
+            : AppColors.card,
         borderRadius: BorderRadius.circular(cardRadius),
-        border: Border.all(
-          color: Colors.grey.withOpacity(0.05),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 25,
-            offset: const Offset(0, 15),
-          ),
-        ],
+        border: Border.all(color: AppColors.cardBorder, width: 1),
+        boxShadow: AppColors.cardBoxShadow,
       );
 
-  static const TextStyle totalTextStyle = TextStyle(
-    fontSize: 34,
-    fontWeight: FontWeight.bold,
-    color: Colors.black87,
-  );
+  static TextStyle get totalTextStyle => TextStyle(
+        fontSize: 34,
+        fontWeight: FontWeight.bold,
+        color: AppColors.textTitle,
+      );
 
-  static const TextStyle titleTextStyle = TextStyle(
-    fontSize: 14,
-    fontWeight: FontWeight.w500,
-    color: Colors.black54,
-  );
+  static TextStyle get titleTextStyle => TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: AppColors.textSecondary,
+      );
 }

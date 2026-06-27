@@ -5,8 +5,20 @@ import 'package:flutter/material.dart';
 class SidebarConstants {
   SidebarConstants._();
 
-  /// Margem inferior entre itens do menu
-  static const double menuItemMarginBottom = 8;
+  /// Largura expandida (Figma: 256px)
+  static const double sidebarExpandedWidth = 256;
+
+  /// Largura recolhida (somente ícones)
+  static const double sidebarCollapsedWidth = 72;
+
+  /// Largura abaixo da qual o conteúdo compacto é exibido durante a animação.
+  static const double compactLayoutBreakpoint = 164;
+
+  /// Duração da animação de recolher/expandir a sidebar
+  static const Duration sidebarCollapseDuration = Duration(milliseconds: 280);
+
+  /// Margem inferior entre itens do menu (+ espaçamento extra)
+  static const double menuItemMarginBottom = 14;
 
   /// Padding horizontal do conteúdo dos itens
   static const double itemContentPaddingHorizontal = 12;

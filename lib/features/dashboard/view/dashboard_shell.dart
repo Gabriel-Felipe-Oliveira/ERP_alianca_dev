@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
+import 'package:erp_alianca_dev/shared/viewmodels/theme_palette_provider.dart';
 import 'package:erp_alianca_dev/features/dashboard/view/widgets/sidebar/sidebar_constants.dart';
 import 'package:erp_alianca_dev/features/dashboard/view/widgets/sidebar_widget.dart';
-import 'package:erp_alianca_dev/shared/utils/app_restart_controller.dart';
+import 'package:erp_alianca_dev/shared/widgets/app_theme_rebuild_child.dart';
 import 'package:erp_alianca_dev/shared/widgets/custom_title_bar.dart';
 import 'package:erp_alianca_dev/shared/widgets/reload_progress_overlay.dart';
-
 class DashboardShell extends StatefulWidget {
   final Widget child;
 
@@ -19,6 +19,7 @@ class DashboardShell extends StatefulWidget {
 class _DashboardShellState extends State<DashboardShell>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  bool _sidebarCollapsed = false;
 
   @override
   void initState() {
@@ -46,24 +47,26 @@ class _DashboardShellState extends State<DashboardShell>
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
+    context.watch<ThemePaletteProvider>();
+
+    return PopScope(      canPop: false,
       child: Scaffold(
         backgroundColor: AppColors.contentBackground,
         body: Column(
         children: [
-          // Barra de título: Atualizar = restart do app (útil em caso de erro)
-          CustomTitleBar(
-            onRefresh: () => context.read<AppRestartController>().restartApp(),
-            onRestart: () => context.read<AppRestartController>().restartApp(),
-          ),
+          // Barra de título: reinício total (anti-bug), independente do estado do app
+          const CustomTitleBar(),
 
           // Conteúdo principal (sidebar + área de conteúdo)
           Expanded(
             child: Row(
               children: [
-                const SidebarWidget(),
-
+                SidebarWidget(
+                  isCollapsed: _sidebarCollapsed,
+                  onToggleCollapsed: () {
+                    setState(() => _sidebarCollapsed = !_sidebarCollapsed);
+                  },
+                ),
                 Expanded(
                   child: ReloadProgressOverlay(
                     child: Container(
@@ -73,12 +76,11 @@ class _DashboardShellState extends State<DashboardShell>
                           parent: _controller,
                           curve: SidebarConstants.expandAnimationCurve,
                         ),
-                        child: widget.child,
+                        child: AppThemeRebuildChild(child: widget.child),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ),              ],
             ),
           ),
         ],

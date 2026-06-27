@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:erp_alianca_dev/features/pedidos/model/pedido_model.dart';
+import 'package:erp_alianca_dev/features/pedidos/view/widgets/pedido_list.dart';
 import 'package:erp_alianca_dev/features/pedidos/viewmodel/pedidos_viewmodel.dart';
 import 'package:erp_alianca_dev/routes/app_router.dart';
 import 'package:erp_alianca_dev/routes/app_routes.dart';
@@ -23,12 +24,12 @@ String _formatarMoeda(double value) {
   ).format(value);
 }
 
-/// Largura da coluna ID na listagem de pedidos.
-const double _kPedidoIdColumnWidth = 90;
-
 /// Colunas do cabeçalho/rodapé da listagem de pedidos.
 const List<ListagemListColumnSpec> _kPedidoListColumns = [
-  ListagemListColumnSpec(label: 'ID', width: _kPedidoIdColumnWidth),
+  ListagemListColumnSpec(
+    label: 'ID',
+    width: kPedidoListIconWidth + kPedidoListIdColumnWidth,
+  ),
   ListagemListColumnSpec(label: 'Nome', flex: 1),
   ListagemListColumnSpec(label: 'Valor', flex: 0),
 ];
@@ -229,32 +230,15 @@ class _PedidosViewState extends State<PedidosView> with RouteAware {
           child: Scrollbar(
             controller: _listScrollController,
             thumbVisibility: true,
-            child: ListView.separated(
-              controller: _listScrollController,
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              itemCount: lista.length + 1,
-              separatorBuilder: (_, index) {
-                if (index >= lista.length - 1) {
-                  return const SizedBox.shrink();
-                }
-                return const SizedBox(height: AppSpacing.sm);
-              },
-              itemBuilder: (context, index) {
-                if (index == lista.length) {
-                  return ListLoadMoreFooter(
-                    isLoadingMore: vm.isLoadingMorePedidos,
-                    hasMore: vm.hasMorePedidos,
-                  );
-                }
-                final p = lista[index];
-                return _PedidoListItem(
-                  pedido: p,
-                  nomeCliente: vm.nomeCliente(p.idCliente),
-                  onTap: () {
-                    context.push(AppRoutes.pedidosDetalhesId(p.idPedido));
-                  },
-                );
-              },
+            child: PedidoList(
+              pedidos: lista,
+              scrollController: _listScrollController,
+              nomeCliente: vm.nomeCliente,
+              onTap: (p) => context.push(AppRoutes.pedidosDetalhesId(p.idPedido)),
+              footer: ListLoadMoreFooter(
+                isLoadingMore: vm.isLoadingMorePedidos,
+                hasMore: vm.hasMorePedidos,
+              ),
             ),
           ),
         ),
@@ -264,59 +248,6 @@ class _PedidosViewState extends State<PedidosView> with RouteAware {
           lastColumnText: 'Total: ${_formatarMoeda(totalGeral)}',
         ),
       ],
-    );
-  }
-}
-
-class _PedidoListItem extends StatelessWidget {
-  const _PedidoListItem({
-    required this.pedido,
-    required this.nomeCliente,
-    this.onTap,
-  });
-
-  final PedidoListagemModel pedido;
-  final String nomeCliente;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final idTexto = '#${pedido.idPedido.toString().padLeft(5, '0')}';
-    return ListagemListItem(
-      onTap: onTap,
-      child: Row(
-        children: [
-          SizedBox(
-            width: _kPedidoIdColumnWidth,
-            child: Text(
-              idTexto,
-              style: AppTextStyles.bodySmall.copyWith(
-                fontWeight: FontWeight.w500,
-                color: AppColors.textSecondary,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              nomeCliente,
-              style: AppTextStyles.bodyMedium.copyWith(
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Text(
-            _formatarMoeda(pedido.total),
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

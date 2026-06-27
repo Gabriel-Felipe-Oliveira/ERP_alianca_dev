@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
+import 'package:erp_alianca_dev/shared/theme/app_radius.dart';
 import 'package:erp_alianca_dev/shared/theme/app_spacing.dart';
 
 /// Dropdown reutilizável do Design System (mesmo padrão visual do input).
@@ -25,7 +26,7 @@ class AppDropdownField<T> extends StatelessWidget {
 
   static OutlineInputBorder _border({Color? color, double width = 1}) {
     return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppSpacing.inputBorderRadius),
+      borderRadius: BorderRadius.circular(AppRadius.input),
       borderSide: BorderSide(
         color: color ?? Colors.transparent,
         width: width,
@@ -41,7 +42,7 @@ class AppDropdownField<T> extends StatelessWidget {
       onChanged: enabled ? onChanged : null,
       validator: validator != null ? (v) => validator!(v) : null,
       dropdownColor: AppColors.input,
-      style: TextStyle(color: AppColors.textPrimary),
+      style: TextStyle(color: AppColors.textBody),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(
@@ -54,14 +55,14 @@ class AppDropdownField<T> extends StatelessWidget {
             ? _border(color: AppColors.primary, width: AppSpacing.inputFocusedBorderWidth)
             : _border(color: AppColors.inputEnabledBorder),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.inputBorderRadius),
+          borderRadius: BorderRadius.circular(AppRadius.input),
           borderSide: BorderSide(
             color: AppColors.primary,
-            width: AppSpacing.inputFocusedBorderWidth,
+            width: 1,
           ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.inputBorderRadius),
+          borderRadius: BorderRadius.circular(AppRadius.input),
           borderSide: BorderSide(color: AppColors.error),
         ),
         contentPadding: const EdgeInsets.symmetric(

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:erp_alianca_dev/core/constants/app_constants.dart';
 import 'package:erp_alianca_dev/core/network/dio_client.dart';
-import 'package:erp_alianca_dev/core/theme/app_theme.dart';
 import 'package:erp_alianca_dev/core/theme/empresa_palettes.dart';
 import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
+import 'package:erp_alianca_dev/shared/models/empresa_palette_model.dart';
 import 'package:erp_alianca_dev/features/clientes/viewmodel/clientes_viewmodel.dart';
 import 'package:erp_alianca_dev/features/home/viewmodel/home_viewmodel.dart';
 import 'package:erp_alianca_dev/features/pedidos/viewmodel/pedidos_viewmodel.dart';
@@ -24,11 +24,10 @@ import 'package:erp_alianca_dev/shared/services/pedido_service.dart';
 import 'package:erp_alianca_dev/shared/services/pdf_export_service.dart';
 import 'package:erp_alianca_dev/shared/services/romaneio_service.dart';
 import 'package:erp_alianca_dev/shared/services/local_storage_service.dart';
-import 'package:erp_alianca_dev/shared/utils/app_restart_controller.dart';
+import 'package:erp_alianca_dev/shared/utils/app_hard_restart.dart';
 import 'package:erp_alianca_dev/shared/utils/pdf_utils.dart';
 import 'package:erp_alianca_dev/shared/viewmodels/navigation_controller.dart';
 import 'package:erp_alianca_dev/shared/viewmodels/theme_palette_provider.dart';
-import 'package:erp_alianca_dev/shared/widgets/restart_overlay.dart';
 import 'package:window_manager/window_manager.dart';
 
 void main() async {
@@ -75,8 +74,12 @@ void main() async {
   final cnpjConsultaService = CnpjConsultaService();
 
   // Paleta da empresa logada (ou mock antes do login).
-  final palette = EmpresaPalettes.getById(empresaService.idEmpresa);
-  AppColors.setCurrent(palette);
+  final basePalette = EmpresaPalettes.getById(empresaService.idEmpresa);
+  final isLightMode =
+      localStorageService.getBool(LocalStorageService.themeLightModeKey) ?? false;
+  AppColors.setCurrent(
+    isLightMode ? EmpresaPalette.lightFrom(basePalette) : basePalette,
+  );
 
   runApp(
     VendasBaseApp(
@@ -131,12 +134,15 @@ class VendasBaseApp extends StatefulWidget {
 }
 
 class _VendasBaseAppState extends State<VendasBaseApp> {
-  int _restartKey = 0;
-  bool _isRestarting = false;
+  int _softRestartKey = 0;
 
-  static const Duration _restartOverlayDuration = Duration(milliseconds: 500);
+  @override
+  void initState() {
+    super.initState();
+    AppHardRestart.registerSoftRestartFallback(_softRestart);
+  }
 
-  void _triggerRestart() {
+  Future<void> _softRestart() async {
     appRouter.go(
       widget.authService.isAuthenticated ? AppRoutes.home : AppRoutes.login,
     );
@@ -146,14 +152,9 @@ class _VendasBaseAppState extends State<VendasBaseApp> {
         ctx.read<NavigationController>().limparHistorico();
       } catch (_) {}
     }
-    setState(() => _isRestarting = true);
-    Future.delayed(_restartOverlayDuration, () {
-      if (!mounted) return;
-      setState(() {
-        _restartKey++;
-        _isRestarting = false;
-      });
-    });
+    if (mounted) {
+      setState(() => _softRestartKey++);
+    }
   }
 
   @override
@@ -172,59 +173,57 @@ class _VendasBaseAppState extends State<VendasBaseApp> {
         Provider<CupomService>.value(value: widget.cupomService),
         Provider<PdfExportService>.value(value: widget.pdfExportService),
         Provider<CnpjConsultaService>.value(value: widget.cnpjConsultaService),
-        Provider<AppRestartController>.value(
-          value: AppRestartController(_triggerRestart),
-        ),
-        ChangeNotifierProvider<NavigationController>(
-          create: (_) => NavigationController(),
-        ),
-        ChangeNotifierProvider<HomeViewModel>(
-          create: (ctx) => HomeViewModel(ctx.read<DashboardService>()),
-        ),
-        ChangeNotifierProvider<ClientesViewModel>(
-          create: (context) => ClientesViewModel(context.read<ClienteService>()),
-        ),
-        ChangeNotifierProvider<ProdutosViewModel>(
-          create: (ctx) => ProdutosViewModel(ctx.read<ProdutoService>()),
-        ),
-        ChangeNotifierProvider<PedidosViewModel>(
-          create: (ctx) => PedidosViewModel(
-            ctx.read<PedidoService>(),
-            ctx.read<ClienteService>(),
-          ),
-        ),
-        ChangeNotifierProvider<RomaneioViewModel>(
-          create: (ctx) => RomaneioViewModel(ctx.read<RomaneioService>()),
-        ),
-        ChangeNotifierProvider<ThemePaletteProvider>(
-          create: (ctx) => ThemePaletteProvider(ctx.read<EmpresaService>()),
-        ),
       ],
-      child: Directionality(
-        textDirection: TextDirection.ltr,
-        child: Stack(
-          children: [
-            KeyedSubtree(
-              key: ValueKey<int>(_restartKey),
-              child: Builder(
-                builder: (context) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    configurarListenerDeRota(context);
-                  });
-                  final themePalette = context.watch<ThemePaletteProvider>();
-                  return MaterialApp.router(
-                    title: AppConstants.appName,
-                    debugShowCheckedModeBanner: false,
-                    theme: AppTheme.light,
-                    darkTheme: themePalette.themeData,
-                    themeMode: ThemeMode.dark,
-                    routerConfig: appRouter,
-                  );
-                },
+      child: KeyedSubtree(
+        key: ValueKey<int>(_softRestartKey),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<NavigationController>(
+              create: (_) => NavigationController(),
+            ),
+            ChangeNotifierProvider<HomeViewModel>(
+              create: (ctx) => HomeViewModel(ctx.read<DashboardService>()),
+            ),
+            ChangeNotifierProvider<ClientesViewModel>(
+              create: (context) =>
+                  ClientesViewModel(context.read<ClienteService>()),
+            ),
+            ChangeNotifierProvider<ProdutosViewModel>(
+              create: (ctx) => ProdutosViewModel(ctx.read<ProdutoService>()),
+            ),
+            ChangeNotifierProvider<PedidosViewModel>(
+              create: (ctx) => PedidosViewModel(
+                ctx.read<PedidoService>(),
+                ctx.read<ClienteService>(),
               ),
             ),
-            if (_isRestarting) const RestartOverlay(),
+            ChangeNotifierProvider<RomaneioViewModel>(
+              create: (ctx) => RomaneioViewModel(ctx.read<RomaneioService>()),
+            ),
+            ChangeNotifierProvider<ThemePaletteProvider>(
+              create: (ctx) => ThemePaletteProvider(
+                ctx.read<EmpresaService>(),
+                ctx.read<LocalStorageService>(),
+              ),
+            ),
           ],
+          child: Builder(
+            builder: (context) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                configurarListenerDeRota(context);
+              });
+              final themePalette = context.watch<ThemePaletteProvider>();
+              return MaterialApp.router(
+                key: ValueKey<bool>(themePalette.isLightMode),
+                title: AppConstants.appName,
+                debugShowCheckedModeBanner: false,
+                theme: themePalette.lightThemeData,
+                darkTheme: themePalette.darkThemeData,
+                themeMode: themePalette.themeMode,
+                routerConfig: appRouter,
+              );
+            },
+          ),
         ),
       ),
     );

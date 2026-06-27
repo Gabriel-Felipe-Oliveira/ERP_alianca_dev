@@ -31,6 +31,7 @@ class LocalStorageService {
   Future<bool> clear() => _prefs.clear();
 
   static const String idEmpresaKey = 'id_empresa';
+  static const String themeLightModeKey = 'theme_light_mode';
 
   Future<bool> saveIdEmpresa(int id) => setInt(idEmpresaKey, id);
 

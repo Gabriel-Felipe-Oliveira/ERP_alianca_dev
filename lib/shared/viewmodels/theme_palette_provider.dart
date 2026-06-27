@@ -3,28 +3,64 @@ import 'package:erp_alianca_dev/core/theme/app_theme.dart';
 import 'package:erp_alianca_dev/core/theme/empresa_palettes.dart';
 import 'package:erp_alianca_dev/shared/models/empresa_palette_model.dart';
 import 'package:erp_alianca_dev/shared/services/empresa_service.dart';
+import 'package:erp_alianca_dev/shared/services/local_storage_service.dart';
+import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
 
-/// Provider que expõe a paleta já definida no main (via EmpresaPalettes.getById) para o MaterialApp.
-/// AppColors.setCurrent é feito no main.dart antes do runApp.
+/// Provider que expõe paleta + modo claro/escuro para o MaterialApp.
 class ThemePaletteProvider extends ChangeNotifier {
-  ThemePaletteProvider(this._empresaService) {
-    _palette = EmpresaPalettes.getById(_empresaService.idEmpresa);
+  ThemePaletteProvider(
+    this._empresaService,
+    this._localStorage,
+  ) {
+    _basePalette = EmpresaPalettes.getById(_empresaService.idEmpresa);
+    _isLightMode =
+        _localStorage.getBool(LocalStorageService.themeLightModeKey) ?? false;
+    _applyPalette();
     _empresaService.addListener(_onEmpresaChanged);
   }
 
   final EmpresaService _empresaService;
+  final LocalStorageService _localStorage;
   bool _disposed = false;
-  late EmpresaPalette _palette;
+  late EmpresaPalette _basePalette;
+  late bool _isLightMode;
+
+  bool get isLightMode => _isLightMode;
+
+  ThemeMode get themeMode =>
+      _isLightMode ? ThemeMode.light : ThemeMode.dark;
+
+  EmpresaPalette get currentPalette => _isLightMode
+      ? EmpresaPalette.lightFrom(_basePalette)
+      : _basePalette;
+
+  ThemeData get lightThemeData =>
+      AppTheme.lightFromPalette(EmpresaPalette.lightFrom(_basePalette));
+
+  ThemeData get darkThemeData => AppTheme.darkFromPalette(_basePalette);
+
+  Future<void> toggleThemeMode() => setLightMode(!_isLightMode);
+
+  Future<void> setLightMode(bool value) async {
+    if (_isLightMode == value) return;
+    _isLightMode = value;
+    _applyPalette();
+    notifyListeners();
+    await _localStorage.setBool(
+      LocalStorageService.themeLightModeKey,
+      value: value,
+    );
+  }
 
   void _onEmpresaChanged() {
-    _palette = EmpresaPalettes.getById(_empresaService.idEmpresa);
+    _basePalette = EmpresaPalettes.getById(_empresaService.idEmpresa);
+    _applyPalette();
     notifyListeners();
   }
 
-  EmpresaPalette get currentPalette => _palette;
-
-  /// Tema escuro construído a partir da paleta da empresa (para MaterialApp).
-  ThemeData get themeData => AppTheme.darkFromPalette(_palette);
+  void _applyPalette() {
+    AppColors.setCurrent(currentPalette);
+  }
 
   @override
   void notifyListeners() {

@@ -47,7 +47,7 @@ class _DashboardCardState extends State<DashboardCard> {
             onTap: widget.onTap,
             child: Container(
               padding: const EdgeInsets.all(DashboardCardConstants.padding),
-              decoration: DashboardCardConstants.decoration,
+              decoration: DashboardCardConstants.decoration(hovering: _hovering),
               child: DashboardCardContent(
                 title: widget.title,
                 total: widget.total,

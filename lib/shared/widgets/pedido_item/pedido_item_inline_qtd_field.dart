@@ -9,14 +9,19 @@ class PedidoItemInlineQtdField extends StatelessWidget {
     super.key,
     required this.controller,
     this.fontSize = 14,
+    this.textAlign = TextAlign.center,
+    this.horizontalPadding = 10,
   });
 
   final TextEditingController controller;
   final double fontSize;
+  final TextAlign textAlign;
+  final double horizontalPadding;
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       constraints: const BoxConstraints(minHeight: 36),
       decoration: BoxDecoration(
         color: AppColors.sidebarItemBackground,
@@ -41,10 +46,13 @@ class PedidoItemInlineQtdField extends StatelessWidget {
           fontSize: fontSize,
           fontWeight: FontWeight.w500,
         ),
-        textAlign: TextAlign.center,
+        textAlign: textAlign,
         decoration: InputDecoration(
           isDense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: horizontalPadding,
+            vertical: 8,
+          ),
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,

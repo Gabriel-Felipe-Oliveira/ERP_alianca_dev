@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:erp_alianca_dev/features/romaneio/model/romaneio_model.dart';
+import 'package:erp_alianca_dev/features/romaneio/view/widgets/romaneio_list.dart';
 import 'package:erp_alianca_dev/features/romaneio/viewmodel/romaneio_viewmodel.dart';
 import 'package:erp_alianca_dev/routes/app_router.dart';
 import 'package:erp_alianca_dev/routes/app_routes.dart';
@@ -24,12 +25,12 @@ String _formatarMoeda(double value) {
   ).format(value);
 }
 
-/// Largura fixa da coluna Romaneio.
-const double _kRomaneioColumnWidth = 100;
-
 /// Colunas do cabeçalho/rodapé da listagem de romaneios.
 const List<ListagemListColumnSpec> _kRomaneioListColumns = [
-  ListagemListColumnSpec(label: 'Romaneio', width: _kRomaneioColumnWidth),
+  ListagemListColumnSpec(
+    label: 'Romaneio',
+    width: kRomaneioListIconWidth + kRomaneioListColumnWidth,
+  ),
   ListagemListColumnSpec(label: 'Motorista', flex: 1),
   ListagemListColumnSpec(label: 'Faturamento', flex: 0),
 ];
@@ -230,31 +231,18 @@ class _RomaneioViewState extends State<RomaneioView> with RouteAware {
           child: Scrollbar(
             controller: _listScrollController,
             thumbVisibility: true,
-            child: ListView.separated(
-              controller: _listScrollController,
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              itemCount: lista.length + 1,
-              separatorBuilder: (_, index) {
-                if (index >= lista.length - 1) {
-                  return const SizedBox.shrink();
+            child: RomaneioList(
+              romaneios: lista,
+              scrollController: _listScrollController,
+              onTap: (r) {
+                if (r.id != null) {
+                  context.go(AppRoutes.romaneioDetalhesId(r.id!));
                 }
-                return const SizedBox(height: AppSpacing.sm);
               },
-              itemBuilder: (context, index) {
-                if (index == lista.length) {
-                  return ListLoadMoreFooter(
-                    isLoadingMore: vm.isLoadingMoreRomaneios,
-                    hasMore: vm.hasMoreRomaneios,
-                  );
-                }
-                final r = lista[index];
-                return _RomaneioListItem(
-                  romaneio: r,
-                  onTap: r.id != null
-                      ? () => context.go(AppRoutes.romaneioDetalhesId(r.id!))
-                      : null,
-                );
-              },
+              footer: ListLoadMoreFooter(
+                isLoadingMore: vm.isLoadingMoreRomaneios,
+                hasMore: vm.hasMoreRomaneios,
+              ),
             ),
           ),
         ),
@@ -264,56 +252,6 @@ class _RomaneioViewState extends State<RomaneioView> with RouteAware {
           lastColumnText: 'Total: ${_formatarMoeda(totalGeral)}',
         ),
       ],
-    );
-  }
-}
-
-class _RomaneioListItem extends StatelessWidget {
-  const _RomaneioListItem({required this.romaneio, this.onTap});
-
-  final RomaneioModel romaneio;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final numeroTexto = RomaneioModel.nomeExibicao(romaneio);
-    final motoristaTexto = (romaneio.nomeMotorista?.trim().isNotEmpty == true)
-        ? romaneio.nomeMotorista!.trim()
-        : 'Motorista não informado';
-    return ListagemListItem(
-      onTap: onTap,
-      child: Row(
-        children: [
-          SizedBox(
-            width: _kRomaneioColumnWidth,
-            child: Text(
-              numeroTexto,
-              style: AppTextStyles.bodySmall.copyWith(
-                fontWeight: FontWeight.w500,
-                color: AppColors.textSecondary,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              motoristaTexto,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Text(
-            'Faturado: ${_formatarMoeda(romaneio.totalFaturado)}',
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

@@ -2,26 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
 import 'package:erp_alianca_dev/shared/theme/app_input_type.dart';
+import 'package:erp_alianca_dev/shared/theme/app_radius.dart';
 import 'package:erp_alianca_dev/shared/theme/app_spacing.dart';
 import 'package:erp_alianca_dev/shared/utils/app_validators.dart';
 import 'package:erp_alianca_dev/shared/utils/input_formatters.dart';
 
 /// Campo de texto reutilizável do Design System para todos os CRUDs.
-/// O [type] define formatação e validação (email, cep, estado).
-class AppTextField extends StatelessWidget {
-  final String label;
-  final TextEditingController controller;
-  final AppInputType? type;
-  final String? Function(String?)? validator;
-  final TextInputType? keyboardType;
-  final bool enabled;
-  final bool obscureText;
-  final bool isModified;
-  final int? minLines;
-  final int? maxLines;
-  final int? maxLength;
-  final void Function(String)? onChanged;
-
+class AppTextField extends StatefulWidget {
   const AppTextField({
     super.key,
     required this.label,
@@ -38,9 +25,29 @@ class AppTextField extends StatelessWidget {
     this.onChanged,
   });
 
-  static OutlineInputBorder _border({Color? color, double width = 1}) {
+  final String label;
+  final TextEditingController controller;
+  final AppInputType? type;
+  final String? Function(String?)? validator;
+  final TextInputType? keyboardType;
+  final bool enabled;
+  final bool obscureText;
+  final bool isModified;
+  final int? minLines;
+  final int? maxLines;
+  final int? maxLength;
+  final void Function(String)? onChanged;
+
+  @override
+  State<AppTextField> createState() => _AppTextFieldState();
+}
+
+class _AppTextFieldState extends State<AppTextField> {
+  bool _focused = false;
+
+  OutlineInputBorder _border({Color? color, double width = 1}) {
     return OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppSpacing.inputBorderRadius),
+      borderRadius: BorderRadius.circular(AppRadius.input),
       borderSide: BorderSide(
         color: color ?? Colors.transparent,
         width: width,
@@ -49,7 +56,7 @@ class AppTextField extends StatelessWidget {
   }
 
   List<TextInputFormatter>? _buildInputFormatters() {
-    switch (type) {
+    switch (widget.type) {
       case AppInputType.cep:
         return [
           FilteringTextInputFormatter.allow(RegExp(r'\d')),
@@ -76,9 +83,7 @@ class AppTextField extends StatelessWidget {
           CurrencyInputFormatter(),
         ];
       case AppInputType.placaVeiculo:
-        return [
-          PlacaVeiculoInputFormatter(),
-        ];
+        return [PlacaVeiculoInputFormatter()];
       case AppInputType.cpf:
         return [
           FilteringTextInputFormatter.allow(RegExp(r'\d')),
@@ -95,8 +100,8 @@ class AppTextField extends StatelessWidget {
   }
 
   TextInputType _resolveKeyboardType() {
-    if (keyboardType != null) return keyboardType!;
-    switch (type) {
+    if (widget.keyboardType != null) return widget.keyboardType!;
+    switch (widget.type) {
       case AppInputType.email:
         return TextInputType.emailAddress;
       case AppInputType.cep:
@@ -112,29 +117,29 @@ class AppTextField extends StatelessWidget {
   }
 
   int? _resolveMaxLength() {
-    if (maxLength != null) return maxLength;
-    switch (type) {
+    if (widget.maxLength != null) return widget.maxLength;
+    switch (widget.type) {
       case AppInputType.estado:
       case AppInputType.telefoneDD:
         return 2;
       case AppInputType.cep:
-        return 9; // 00000-000
+        return 9;
       case AppInputType.telefoneNumero:
         return 9;
       case AppInputType.placaVeiculo:
         return 7;
       case AppInputType.cpf:
-        return 14; // 000.000.000-00
+        return 14;
       case AppInputType.cnpj:
-        return 18; // 00.000.000/0000-00
+        return 18;
       default:
         return null;
     }
   }
 
   String? Function(String?)? _resolveValidator() {
-    if (validator != null) return validator;
-    switch (type) {
+    if (widget.validator != null) return widget.validator;
+    switch (widget.type) {
       case AppInputType.email:
         return AppValidators.email;
       case AppInputType.cep:
@@ -160,44 +165,61 @@ class AppTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
+    final field = TextFormField(
+      controller: widget.controller,
       validator: _resolveValidator(),
       keyboardType: _resolveKeyboardType(),
-      enabled: enabled,
-      obscureText: obscureText,
-      minLines: minLines,
-      maxLines: maxLines,
+      enabled: widget.enabled,
+      obscureText: widget.obscureText,
+      minLines: widget.minLines,
+      maxLines: widget.maxLines,
       maxLength: _resolveMaxLength(),
-      onChanged: onChanged,
+      onChanged: widget.onChanged,
       inputFormatters: _buildInputFormatters(),
-      style: TextStyle(color: AppColors.textPrimary),
+      style: TextStyle(
+        color: widget.enabled ? AppColors.textBody : AppColors.textSecondary,
+      ),
       decoration: InputDecoration(
-        labelText: label,
+        labelText: widget.label,
         labelStyle: TextStyle(
-          color: isModified ? AppColors.primary : AppColors.textSecondary,
+          color: widget.isModified ? AppColors.primary : AppColors.textSecondary,
         ),
         filled: true,
-        fillColor: AppColors.input,
+        fillColor: widget.enabled
+            ? AppColors.input
+            : AppColors.sidebarItemBackground,
         border: _border(color: AppColors.inputEnabledBorder),
-        enabledBorder: isModified
-            ? _border(color: AppColors.primary, width: AppSpacing.inputFocusedBorderWidth)
+        enabledBorder: widget.isModified
+            ? _border(color: AppColors.primary)
             : _border(color: AppColors.inputEnabledBorder),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.inputBorderRadius),
-          borderSide: BorderSide(
-            color: AppColors.primary,
-            width: AppSpacing.inputFocusedBorderWidth,
-          ),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.inputBorderRadius),
-          borderSide: BorderSide(color: AppColors.error),
-        ),
+        focusedBorder: _border(color: AppColors.primary, width: 1),
+        errorBorder: _border(color: AppColors.error),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.inputPaddingHorizontal,
           vertical: AppSpacing.inputPaddingVertical,
         ),
+      ),
+    );
+
+    return Focus(
+      onFocusChange: (hasFocus) {
+        if (_focused != hasFocus) setState(() => _focused = hasFocus);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        decoration: _focused && AppColors.isLightTheme
+            ? BoxDecoration(
+                borderRadius: BorderRadius.circular(AppRadius.input),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.15),
+                    blurRadius: 0,
+                    spreadRadius: 3,
+                  ),
+                ],
+              )
+            : null,
+        child: field,
       ),
     );
   }

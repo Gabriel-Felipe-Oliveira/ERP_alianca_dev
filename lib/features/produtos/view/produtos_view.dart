@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:erp_alianca_dev/features/produtos/model/produto_model.dart';
 import 'package:erp_alianca_dev/routes/app_router.dart';
 import 'package:erp_alianca_dev/routes/app_routes.dart';
+import 'package:erp_alianca_dev/features/produtos/view/widgets/produto_list.dart';
+import 'package:erp_alianca_dev/features/produtos/view/widgets/produto_search_bar.dart';
 import 'package:erp_alianca_dev/features/produtos/viewmodel/produtos_viewmodel.dart';
 import 'package:erp_alianca_dev/shared/models/base_state.dart';
 import 'package:erp_alianca_dev/shared/viewmodels/navigation_controller.dart';
@@ -13,13 +15,6 @@ import 'package:erp_alianca_dev/shared/theme/app_text_styles.dart';
 import 'package:erp_alianca_dev/shared/utils/pagination_scroll.dart';
 import 'package:erp_alianca_dev/shared/widgets/app_shimmer.dart';
 import 'package:erp_alianca_dev/shared/widgets/list_load_more_footer.dart';
-import 'package:erp_alianca_dev/shared/widgets/compact_search_select.dart';
-import 'package:erp_alianca_dev/shared/widgets/listagem_list_card.dart';
-
-/// Formata preço para exibição (ex.: 29.9 → "29,90").
-String _formatarPreco(double preco) {
-  return preco.toStringAsFixed(2).replaceAll('.', ',');
-}
 
 /// Tela de listagem de produtos. Padrão igual a cliente/listagem.
 class ProdutosView extends StatefulWidget {
@@ -48,10 +43,26 @@ class _ProdutosViewState extends State<ProdutosView> with RouteAware {
       vm.loadProdutos();
       attachPaginationScrollListener(
         controller: _listScrollController,
-        hasMore: () => context.read<ProdutosViewModel>().hasMoreProdutos,
-        isLoadingMore: () =>
-            context.read<ProdutosViewModel>().isLoadingMoreProdutos,
-        onLoadMore: () => context.read<ProdutosViewModel>().loadMoreProdutos(),
+        hasMore: () {
+          final current = context.read<ProdutosViewModel>();
+          return current.query.trim().isNotEmpty
+              ? current.hasMoreBusca
+              : current.hasMoreProdutos;
+        },
+        isLoadingMore: () {
+          final current = context.read<ProdutosViewModel>();
+          return current.query.trim().isNotEmpty
+              ? current.isLoadingMoreBusca
+              : current.isLoadingMoreProdutos;
+        },
+        onLoadMore: () {
+          final current = context.read<ProdutosViewModel>();
+          if (current.query.trim().isNotEmpty) {
+            current.loadMoreBusca();
+          } else {
+            current.loadMoreProdutos();
+          }
+        },
       );
     });
   }
@@ -102,13 +113,32 @@ class _ProdutosViewState extends State<ProdutosView> with RouteAware {
     });
   }
 
+  /// Lista a exibir: sem busca usa produtosTodos; com busca usa produtosBusca.
+  List<ProdutoModel> _listaParaExibir(ProdutosViewModel vm, bool isBuscando) {
+    if (!isBuscando) return vm.produtosTodos;
+    if (vm.stateBusca == ViewState.success) return vm.produtosBusca;
+    return vm.produtosBusca.isNotEmpty ? vm.produtosBusca : vm.produtosTodos;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ProdutosViewModel>(
       builder: (context, vm, _) {
-        final produtos = vm.produtosTodos;
-        final loadingLista = vm.state == ViewState.loading && vm.produtosTodos.isEmpty;
-        final errorLista = vm.state == ViewState.error && vm.produtosTodos.isEmpty;
+        final isBuscando = vm.query.trim().isNotEmpty;
+        final produtos = _listaParaExibir(vm, isBuscando);
+        final loadingLista =
+            vm.state == ViewState.loading && vm.produtosTodos.isEmpty;
+        final errorLista =
+            vm.state == ViewState.error && vm.produtosTodos.isEmpty;
+
+        final countAtual =
+            isBuscando ? vm.produtosBusca.length : vm.produtosTodos.length;
+        final totalAtual = isBuscando ? vm.totalBusca : vm.totalProdutos;
+        final countLabel = totalAtual > countAtual
+            ? '$countAtual de $totalAtual produtos'
+            : (produtos.length == 1
+                ? '1 produto encontrado'
+                : '${produtos.length} produtos encontrados');
 
         return Padding(
           padding: const EdgeInsets.fromLTRB(
@@ -120,47 +150,30 @@ class _ProdutosViewState extends State<ProdutosView> with RouteAware {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(0, 12, 16, 8),
-                child: CompactSearchSelect<ProdutoModel>(
-                  controller: _searchController,
-                  hintText: 'Buscar produtos por nome...',
-                  onSearch: () => vm.buscarPorNome(),
-                  onChanged: (value) => vm.query = value,
-                  onFocus: () => vm.buscarPorNome(),
-                  isLoading: vm.stateBusca == ViewState.loading,
-                  items: vm.produtosBusca,
-                  itemBuilder: (context, p) => _buildProdutoSearchRow(p),
-                  onItemSelected: (p) {
-                    vm.limparBusca();
-                    if (p.idProduto != null) {
-                      context.read<NavigationController>().registrarRota(AppRoutes.produtos);
-                      context.read<NavigationController>().registrarRota(AppRoutes.produtosDetalhesId(p.idProduto!));
-                      context.go(AppRoutes.produtosDetalhesId(p.idProduto!));
-                    }
-                  },
-                  errorMessage: vm.stateBusca == ViewState.error ? 'Erro ao buscar. Tente novamente.' : null,
-                  maxListHeight: 280,
-                ),
-              ),
+              ProdutoSearchBar(controller: _searchController),
               const SizedBox(height: AppSpacing.section),
               Align(
                 alignment: Alignment.centerLeft,
-                child: Text(
-                  vm.totalProdutos > produtos.length
-                      ? '${produtos.length} de ${vm.totalProdutos} produtos'
-                      : (produtos.length == 1
-                          ? '1 produto encontrado'
-                          : '${produtos.length} produtos encontrados'),
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
+                child: IgnorePointer(
+                  child: Text(
+                    countLabel,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               ),
               const SizedBox(height: AppSpacing.section),
               Expanded(
-                child: _buildMainContent(context, vm, produtos, loadingLista, errorLista),
+                child: _buildMainContent(
+                  context,
+                  vm,
+                  produtos: produtos,
+                  isBuscando: isBuscando,
+                  loadingLista: loadingLista,
+                  errorLista: errorLista,
+                ),
               ),
             ],
           ),
@@ -169,31 +182,14 @@ class _ProdutosViewState extends State<ProdutosView> with RouteAware {
     );
   }
 
-  Widget _buildProdutoSearchRow(ProdutoModel p) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            p.nome,
-            style: AppTextStyles.bodyMedium,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        Text(
-          'R\$ ${_formatarPreco(p.preco)}',
-          style: AppTextStyles.bodySmall,
-        ),
-      ],
-    );
-  }
-
   Widget _buildMainContent(
     BuildContext context,
-    ProdutosViewModel vm,
-    List<ProdutoModel> produtos,
-    bool loadingLista,
-    bool errorLista,
-  ) {
+    ProdutosViewModel vm, {
+    required List<ProdutoModel> produtos,
+    required bool isBuscando,
+    required bool loadingLista,
+    required bool errorLista,
+  }) {
     if (loadingLista) {
       return ListView.builder(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
@@ -216,7 +212,9 @@ class _ProdutosViewState extends State<ProdutosView> with RouteAware {
             children: [
               Text(
                 vm.errorMessage,
-                style: AppTextStyles.bodyLarge.copyWith(color: AppColors.textPrimary),
+                style: AppTextStyles.bodyLarge.copyWith(
+                  color: AppColors.textPrimary,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSpacing.md),
@@ -230,118 +228,73 @@ class _ProdutosViewState extends State<ProdutosView> with RouteAware {
       );
     }
     if (produtos.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Nenhum produto cadastrado.',
-                style: AppTextStyles.bodyLarge.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              FilledButton(
-                onPressed: () {
-                  context.read<NavigationController>().registrarRota(AppRoutes.produtosCriar);
-                  context.go(AppRoutes.produtosCriar);
-                },
-                child: const Text('Cadastrar produto'),
-              ),
-            ],
-          ),
-        ),
-      );
+      return _buildEmptyState(context, vm, isBuscando);
     }
     return Scrollbar(
       controller: _listScrollController,
       thumbVisibility: true,
-      child: ListView.separated(
-        controller: _listScrollController,
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-        itemCount: produtos.length + 1,
-        separatorBuilder: (_, index) {
-          if (index >= produtos.length - 1) {
-            return const SizedBox.shrink();
+      child: ProdutoList(
+        produtos: produtos,
+        scrollController: _listScrollController,
+        onTap: (p) {
+          if (p.idProduto != null) {
+            final path = AppRoutes.produtosDetalhesId(p.idProduto!);
+            context.read<NavigationController>().registrarRota(path);
+            context.go(path);
           }
-          return const SizedBox(height: AppSpacing.sm);
         },
-        itemBuilder: (context, index) {
-          if (index == produtos.length) {
-            return ListLoadMoreFooter(
-              isLoadingMore: vm.isLoadingMoreProdutos,
-              hasMore: vm.hasMoreProdutos,
-            );
-          }
-          final p = produtos[index];
-          return _ProdutoListItem(
-            produto: p,
-            onTap: () {
-              if (p.idProduto != null) {
-                final path = AppRoutes.produtosDetalhesId(p.idProduto!);
-                context.read<NavigationController>().registrarRota(path);
-                context.go(path);
-              }
-            },
-          );
-        },
+        footer: ListLoadMoreFooter(
+          isLoadingMore: isBuscando
+              ? vm.isLoadingMoreBusca
+              : vm.isLoadingMoreProdutos,
+          hasMore: isBuscando ? vm.hasMoreBusca : vm.hasMoreProdutos,
+        ),
       ),
     );
   }
-}
 
-class _ProdutoListItem extends StatelessWidget {
-  const _ProdutoListItem({
-    required this.produto,
-    this.onTap,
-  });
-
-  final ProdutoModel produto;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final codigo = produto.idProduto != null
-        ? '#${produto.idProduto!.toString().padLeft(5, '0')}'
-        : '—';
-    return ListagemListItem(
-      onTap: onTap,
-      child: Row(
-        children: [
-          SizedBox(
-            width: 90,
-            child: Text(
-              codigo,
-              style: AppTextStyles.bodySmall.copyWith(
-                fontWeight: FontWeight.w500,
+  Widget _buildEmptyState(
+    BuildContext context,
+    ProdutosViewModel vm,
+    bool isBuscando,
+  ) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              isBuscando
+                  ? 'Nenhum produto encontrado para esta busca.'
+                  : 'Nenhum produto cadastrado.',
+              style: AppTextStyles.bodyLarge.copyWith(
                 color: AppColors.textSecondary,
               ),
-              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
             ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              produto.nome,
-              style: AppTextStyles.bodyMedium.copyWith(
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+            const SizedBox(height: AppSpacing.md),
+            if (isBuscando)
+              TextButton(
+                onPressed: () {
+                  _searchController.clear();
+                  vm.resetBusca();
+                },
+                child: const Text('Limpar busca'),
+              )
+            else
+              FilledButton(
+                onPressed: () {
+                  context
+                      .read<NavigationController>()
+                      .registrarRota(AppRoutes.produtosCriar);
+                  context.go(AppRoutes.produtosCriar);
+                },
+                child: const Text('Cadastrar produto'),
               ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Text(
-            'R\$ ${_formatarPreco(produto.preco)}',
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

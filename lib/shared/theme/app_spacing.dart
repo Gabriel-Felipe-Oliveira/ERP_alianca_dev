@@ -58,7 +58,7 @@ abstract class AppSpacing {
   static const double fieldSpacingCompact = 8;
 
   /// Border radius dos inputs (TextField, Dropdown)
-  static const double inputBorderRadius = 10;
+  static const double inputBorderRadius = 12;
 
   /// Border radius do container de formulário
   static const double formContainerBorderRadius = 12;

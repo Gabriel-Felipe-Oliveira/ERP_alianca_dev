@@ -80,6 +80,7 @@ View → ViewModel → Service → API
 - Sem HTTP, sem parse JSON, sem bytes/layout PDF.
 - `Consumer` / `context.watch<VM>()` / `Selector` quando fizer sentido.
 - Validar formulários antes de chamar o ViewModel.
+- **Feedback ao usuário (sucesso/erro de API):** usar `showAppSuccess`, `showAppError` ou `showAppFeedback` de `shared/widgets/app_toast.dart`, com `AppFeedbackMessage` (`shared/models/app_feedback.dart`). Duração padrão: sucesso 3s, erro 4s. Toque fora fecha. **Não** usar `SnackBar` nem mensagem inline solta para resultado de API — preferir o overlay padronizado.
 - Extrair widgets grandes em `view/widgets/` (**meta: &lt; 300 linhas** por arquivo).
 
 ### 4.2 ViewModel (`*_viewmodel.dart`)

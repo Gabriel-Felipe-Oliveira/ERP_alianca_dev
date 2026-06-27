@@ -124,19 +124,39 @@ class _PedidoSelecaoProdutosModalState extends State<PedidoSelecaoProdutosModal>
         ),
       );
     }
-    return ListView.separated(
+    return ListView.builder(
       padding: const EdgeInsets.only(right: AppSpacing.xs),
-      itemCount: filtrados.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 4),
-      itemBuilder: (context, index) {
-        final p = filtrados[index];
-        return PedidoSelecaoProdutoLinha(
-          nome: p.nome,
-          precoTexto: 'R\$ ${formatarPreco(p.preco)}',
-          onTap: () => _adicionarNaSelecao(p),
-          jaAdicionado: _estaNosEscolhidos(p),
+      itemCount: (filtrados.length + 1) ~/ 2,
+      itemBuilder: (context, rowIndex) {
+        final leftIndex = rowIndex * 2;
+        final rightIndex = leftIndex + 1;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _buildProdutoCard(filtrados[leftIndex]),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: rightIndex < filtrados.length
+                    ? _buildProdutoCard(filtrados[rightIndex])
+                    : const SizedBox.shrink(),
+              ),
+            ],
+          ),
         );
       },
+    );
+  }
+
+  Widget _buildProdutoCard(ProdutoModel p) {
+    return PedidoSelecaoProdutoLinha(
+      nome: p.nome,
+      precoTexto: 'R\$ ${formatarPreco(p.preco)}',
+      onTap: () => _adicionarNaSelecao(p),
+      jaAdicionado: _estaNosEscolhidos(p),
     );
   }
 

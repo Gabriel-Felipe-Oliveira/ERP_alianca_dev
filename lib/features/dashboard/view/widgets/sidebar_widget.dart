@@ -1,18 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:erp_alianca_dev/core/constants/app_constants.dart';
 import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
+import 'package:erp_alianca_dev/shared/theme/app_spacing.dart';
 import 'package:erp_alianca_dev/shared/theme/app_text_styles.dart';
 import 'package:erp_alianca_dev/features/dashboard/view/widgets/sidebar_menu_item.dart';
 import 'package:erp_alianca_dev/features/dashboard/view/widgets/sidebar/sidebar_constants.dart';
+import 'package:erp_alianca_dev/features/dashboard/view/widgets/sidebar/sidebar_interactive.dart';
+import 'package:erp_alianca_dev/shared/widgets/app_logo.dart';
+import 'package:erp_alianca_dev/shared/widgets/app_theme_mode_toggle.dart';
+import 'package:erp_alianca_dev/shared/viewmodels/theme_palette_provider.dart';
 import 'package:erp_alianca_dev/shared/services/auth_service.dart';
 import 'package:erp_alianca_dev/routes/app_routes.dart';
 
 class SidebarWidget extends StatefulWidget {
-  /// Largura do Figma: 256px
-  static const double sidebarWidth = 256;
+  static const double sidebarWidth = SidebarConstants.sidebarExpandedWidth;
 
-  const SidebarWidget({super.key});
+  const SidebarWidget({
+    super.key,
+    required this.isCollapsed,
+    required this.onToggleCollapsed,
+  });
+
+  final bool isCollapsed;
+  final VoidCallback onToggleCollapsed;
 
   @override
   State<SidebarWidget> createState() => _SidebarWidgetState();
@@ -37,46 +49,58 @@ class _SidebarWidgetState extends State<SidebarWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final String currentLocation = _currentPath(context);
+    context.watch<ThemePaletteProvider>();
+    final String currentLocation = _currentPath(context);    final targetWidth = widget.isCollapsed
+        ? SidebarConstants.sidebarCollapsedWidth
+        : SidebarConstants.sidebarExpandedWidth;
 
-    return Container(
-      width: SidebarWidget.sidebarWidth,
-      padding: const EdgeInsets.all(24),
+    return AnimatedContainer(
+      duration: SidebarConstants.sidebarCollapseDuration,
+      curve: SidebarConstants.expandAnimationCurve,
+      width: targetWidth,
+      clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
         color: AppColors.sidebarBackground,
+        border: AppColors.isLightTheme
+            ? Border(right: BorderSide(color: AppColors.border, width: 1))
+            : null,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header / Logo
-          _buildHeader(),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compactLayout = constraints.maxWidth <
+              SidebarConstants.compactLayoutBreakpoint;
+          final horizontalPadding = compactLayout ? 12.0 : 24.0;
 
-          const SizedBox(height: 8),
-          Divider(height: 2, color: AppColors.sidebarDivider, thickness: 2),
-          const SizedBox(height: 8),
-
-          // Menu items (Figma Navigation gap: 8px)
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
+          return Padding(
+            padding: EdgeInsets.all(horizontalPadding),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Home
-                SidebarMenuItem(
-                  icon: Icons.home_outlined,
-                  title: 'Home',
-                  route: AppRoutes.home,
-                  isSelected: currentLocation == AppRoutes.home,
-                  onTap: () => context.go(AppRoutes.home),
-                ),
+                _buildHeader(compactLayout: compactLayout),
 
-                // Clientes
-                SidebarMenuItemExpandable(
-                  icon: Icons.people_outline,
-                  title: 'Clientes',
-                  baseRoute: AppRoutes.clientes,
-                  currentLocation: currentLocation,
-                  collapsingSection: _collapsingSection,
+                const SidebarSubtleDivider(),
+
+                Expanded(
+                  child: ListView(
+                    padding: EdgeInsets.zero,
+                    children: [
+                      SidebarMenuItem(
+                        icon: Icons.home_outlined,
+                        title: 'Home',
+                        route: AppRoutes.home,
+                        isSelected: currentLocation == AppRoutes.home,
+                        isCollapsed: compactLayout,
+                        onTap: () => context.go(AppRoutes.home),
+                      ),
+
+                      SidebarMenuItemExpandable(
+                        icon: Icons.people_outline,
+                        title: 'Clientes',
+                        baseRoute: AppRoutes.clientes,
+                        currentLocation: currentLocation,
+                        collapsingSection: _collapsingSection,
+                  isCollapsed: compactLayout,
                   onTapBase: () => _onSectionTap(
                     context,
                     currentLocation,
@@ -114,6 +138,7 @@ class _SidebarWidgetState extends State<SidebarWidget> {
                   baseRoute: AppRoutes.produtos,
                   currentLocation: currentLocation,
                   collapsingSection: _collapsingSection,
+                  isCollapsed: compactLayout,
                   onTapBase: () => _onSectionTap(
                     context,
                     currentLocation,
@@ -144,6 +169,7 @@ class _SidebarWidgetState extends State<SidebarWidget> {
                   baseRoute: AppRoutes.pedidos,
                   currentLocation: currentLocation,
                   collapsingSection: _collapsingSection,
+                  isCollapsed: compactLayout,
                   onTapBase: () => _onSectionTap(
                     context,
                     currentLocation,
@@ -174,6 +200,7 @@ class _SidebarWidgetState extends State<SidebarWidget> {
                   baseRoute: AppRoutes.romaneio,
                   currentLocation: currentLocation,
                   collapsingSection: _collapsingSection,
+                  isCollapsed: compactLayout,
                   onTapBase: () => _onSectionTap(
                     context,
                     currentLocation,
@@ -200,8 +227,11 @@ class _SidebarWidgetState extends State<SidebarWidget> {
             ),
           ),
 
-          _buildFooter(),
+          _buildFooter(compactLayout: compactLayout),
         ],
+      ),
+    );
+        },
       ),
     );
   }
@@ -257,76 +287,298 @@ class _SidebarWidgetState extends State<SidebarWidget> {
     return null;
   }
 
-  Widget _buildHeader() {
-    return Text(
-      'Vendas Base',
-      style: AppTextStyles.heading2.copyWith(
-        color: AppColors.sidebarTextActive,
-        fontWeight: FontWeight.w500,
+  Widget _buildHeader({required bool compactLayout}) {
+    if (compactLayout) {
+      return Center(
+        child: _SidebarToggleButton(
+          isCollapsed: widget.isCollapsed,
+          onPressed: widget.onToggleCollapsed,
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        const AppLogo(
+          width: 28,
+          height: 28,
+          fallbackIcon: Icons.storefront_outlined,
+          fallbackIconSize: 22,
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            'Vendas Base',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.heading2.copyWith(
+              color: AppColors.sidebarTextActive,
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
+              letterSpacing: -0.02,
+            ),
+          ),
+        ),
+        _SidebarToggleButton(
+          isCollapsed: widget.isCollapsed,
+          onPressed: widget.onToggleCollapsed,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUserAvatar(String nome, {double radius = 18}) {
+    final initial =
+        nome.isNotEmpty ? nome.substring(0, 1).toUpperCase() : '?';
+
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: AppColors.sidebarDivider,
+      child: Text(
+        initial,
+        style: AppTextStyles.bodySmall.copyWith(
+          color: AppColors.sidebarTextActive,
+          fontWeight: FontWeight.w700,
+          fontSize: radius * 0.85,
+        ),
       ),
     );
   }
 
-  Widget _buildFooter() {
+  Widget _buildFooter({required bool compactLayout}) {
     final auth = context.watch<AuthService>();
     final usuario = auth.usuario;
+
+    if (compactLayout) {
+      return Column(
+        children: [
+          const SidebarSubtleDivider(),
+          if (usuario != null) ...[
+            Tooltip(
+              message: '${usuario.nome}\n${usuario.email}',
+              child: _buildUserAvatar(usuario.nome, radius: 16),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
+          const AppThemeModeToggle(compact: true),
+          const SizedBox(height: AppSpacing.xs),
+          _SidebarLogoutButton(
+            compact: true,
+            onPressed: () => _logout(context, auth),
+          ),
+          const SidebarSubtleDivider(),
+          const _SidebarVersionLabel(compact: true),
+        ],
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        const SidebarSubtleDivider(),
         if (usuario != null) ...[
-          Text(
-            usuario.nome,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.sidebarTextActive,
-              fontWeight: FontWeight.w500,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _buildUserAvatar(usuario.nome),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      usuario.nome,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.sidebarTextActive,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      usuario.email,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.sidebarTextMuted,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            usuario.email,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.caption.copyWith(
-              color: AppColors.sidebarTextMuted,
-            ),
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
         ],
-        TextButton.icon(
-          onPressed: () async {
-            final router = GoRouter.of(context);
-            await auth.logout();
-            if (!context.mounted) return;
-            router.go(AppRoutes.login);
-          },
-          icon: Icon(
-            Icons.logout,
-            size: 18,
-            color: AppColors.sidebarTextMuted,
+        const AppThemeModeToggle(),
+        _SidebarLogoutButton(
+          onPressed: () => _logout(context, auth),
+        ),
+        const SidebarSubtleDivider(),
+        const _SidebarVersionLabel(),
+      ],
+    );
+  }
+
+  Future<void> _logout(BuildContext context, AuthService auth) async {
+    final router = GoRouter.of(context);
+    await auth.logout();
+    if (!context.mounted) return;
+    router.go(AppRoutes.login);
+  }
+}
+
+class _SidebarLogoutButton extends StatefulWidget {
+  const _SidebarLogoutButton({
+    required this.onPressed,
+    this.compact = false,
+  });
+
+  final VoidCallback onPressed;
+  final bool compact;
+
+  @override
+  State<_SidebarLogoutButton> createState() => _SidebarLogoutButtonState();
+}
+
+class _SidebarLogoutButtonState extends State<_SidebarLogoutButton> {
+  bool _isHovered = false;
+
+  Color get _contentColor =>
+      _isHovered ? AppColors.error : AppColors.sidebarTextMuted;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.compact) {
+      return SidebarCollapsedIconTile(
+        icon: Icons.logout_outlined,
+        label: 'Sair',
+        isSelected: false,
+        iconColor: _contentColor,
+        onTap: widget.onPressed,
+        onHoverChanged: (hovered) => setState(() => _isHovered = hovered),
+      );
+    }
+
+    return SidebarInteractiveTile(
+      isSelected: false,
+      isHovered: _isHovered,
+      onHoverChanged: (hovered) => setState(() => _isHovered = hovered),
+      onTap: widget.onPressed,
+      marginBottom: 0,
+      child: Row(
+        children: [
+          Icon(
+            Icons.logout_outlined,
+            color: _contentColor,
+            size: SidebarLayout.iconSize,
           ),
-          label: Text(
+          const SizedBox(width: 12),
+          Text(
             'Sair',
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.sidebarTextMuted,
+            style: TextStyle(
+              color: _contentColor,
+              fontWeight: FontWeight.w500,
+              fontSize: 14,
+              letterSpacing: -0.02,
             ),
           ),
-          style: TextButton.styleFrom(
-            alignment: Alignment.centerLeft,
-            padding: EdgeInsets.zero,
+        ],
+      ),
+    );
+  }
+}
+
+class _SidebarVersionLabel extends StatelessWidget {
+  const _SidebarVersionLabel({this.compact = false});
+
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      'Versão ${AppConstants.appVersion}',
+      textAlign: compact ? TextAlign.center : TextAlign.start,
+      style: AppTextStyles.caption.copyWith(
+        color: AppColors.sidebarTextMuted.withValues(alpha: 0.75),
+        fontSize: 10,
+        fontWeight: FontWeight.w400,
+        letterSpacing: 0.1,
+      ),
+    );
+  }
+}
+
+class _SidebarToggleButton extends StatefulWidget {
+  const _SidebarToggleButton({
+    required this.isCollapsed,
+    required this.onPressed,
+  });
+
+  final bool isCollapsed;
+  final VoidCallback onPressed;
+
+  @override
+  State<_SidebarToggleButton> createState() => _SidebarToggleButtonState();
+}
+
+class _SidebarToggleButtonState extends State<_SidebarToggleButton> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: widget.isCollapsed ? 'Expandir menu' : 'Recolher menu',
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        cursor: SystemMouseCursors.click,
+        child: AnimatedContainer(
+          duration: SidebarLayout.hoverDuration,
+          curve: Curves.easeOut,
+          width: SidebarLayout.toggleButtonSize,
+          height: SidebarLayout.toggleButtonSize,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: _isHovered
+                ? AppColors.listagemItemHover.withValues(alpha: 0.35)
+                : AppColors.sidebarDivider.withValues(alpha: 0.45),
+            border: Border.all(
+              color: AppColors.sidebarBorder.withValues(
+                alpha: _isHovered ? 0.55 : 0.35,
+              ),
+            ),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            shape: const CircleBorder(),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: widget.onPressed,
+              splashColor: AppColors.primary.withValues(alpha: 0.12),
+              child: AnimatedSwitcher(
+                duration: SidebarLayout.hoverDuration,
+                transitionBuilder: (child, animation) => RotationTransition(
+                  turns: Tween<double>(begin: 0.85, end: 1).animate(animation),
+                  child: FadeTransition(opacity: animation, child: child),
+                ),
+                child: Icon(
+                  widget.isCollapsed
+                      ? Icons.chevron_right_rounded
+                      : Icons.chevron_left_rounded,
+                  key: ValueKey(widget.isCollapsed),
+                  size: 20,
+                  color: _isHovered
+                      ? AppColors.sidebarTextActive
+                      : AppColors.sidebarTextMuted,
+                ),
+              ),
+            ),
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          'v1.0.0',
-          style: AppTextStyles.caption.copyWith(
-            color: AppColors.sidebarTextMuted,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

@@ -105,25 +105,30 @@ void pedidoAbrirModalSelecaoProdutos(
     barrierColor: Colors.black54,
     builder: (ctx) {
       final size = MediaQuery.sizeOf(ctx);
-      final maxHeight = size.height * 0.75;
-      final horizontalInset = size.width * 0.05;
-      final verticalInset = size.height * 0.125;
+      const modalFraction = 0.5;
+      final modalWidth = size.width * modalFraction;
+      final modalHeight = size.height * modalFraction;
+      final horizontalInset = (size.width - modalWidth) / 2;
+      final verticalInset = (size.height - modalHeight) / 2;
       return Dialog(
         backgroundColor: AppColors.contentBackground,
-        insetPadding: EdgeInsets.symmetric(
-          horizontal: horizontalInset,
-          vertical: verticalInset,
+        insetPadding: EdgeInsets.fromLTRB(
+          horizontalInset,
+          verticalInset,
+          horizontalInset,
+          verticalInset,
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
         child: ConstrainedBox(
           constraints: BoxConstraints(
-            maxWidth: size.width - (horizontalInset * 2),
-            maxHeight: maxHeight,
+            maxWidth: modalWidth,
+            maxHeight: modalHeight,
           ),
           child: SizedBox(
-            height: maxHeight,
+            width: modalWidth,
+            height: modalHeight,
             child: ListenableProvider<PedidoSelecaoProdutosVm>.value(
               value: vm,
               child: const PedidoSelecaoProdutosModal(),
