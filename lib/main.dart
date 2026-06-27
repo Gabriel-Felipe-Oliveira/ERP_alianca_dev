@@ -13,7 +13,10 @@ import 'package:erp_alianca_dev/features/produtos/viewmodel/produtos_viewmodel.d
 import 'package:erp_alianca_dev/features/romaneio/viewmodel/romaneio_viewmodel.dart';
 import 'package:erp_alianca_dev/routes/app_routes.dart';
 import 'package:erp_alianca_dev/routes/app_router.dart';
+import 'package:erp_alianca_dev/shared/services/auth_storage_service.dart';
+import 'package:erp_alianca_dev/shared/services/auth_service.dart';
 import 'package:erp_alianca_dev/shared/services/cliente_service.dart';
+import 'package:erp_alianca_dev/shared/services/cnpj_consulta_service.dart';
 import 'package:erp_alianca_dev/shared/services/cupom_service.dart';
 import 'package:erp_alianca_dev/shared/services/dashboard_service.dart';
 import 'package:erp_alianca_dev/shared/services/empresa_service.dart';
@@ -50,12 +53,18 @@ void main() async {
 
   await garantirPastasPdfCriadas();
 
-  // Tema PDF não é mais carregado no startup (evita erro AssetManifest).
-  // Será carregado na primeira geração de PDF (romaneio_pdf, cupom_pdf).
-
+  final authStorageService = AuthStorageService(localStorageService);
   final empresaService = EmpresaService();
-  await empresaService.setEmpresaId(kDefaultIdEmpresa, localStorageService);
-  final dioClient = DioClient(empresaService);
+  final authService = AuthService(
+    authStorage: authStorageService,
+    empresaService: empresaService,
+    localStorageService: localStorageService,
+  );
+  await authService.restoreSession();
+
+  initAppRouter(authService);
+
+  final dioClient = DioClient(empresaService, authService);
   final clienteService = ClienteService(dioClient);
   final pedidoService = PedidoService(dioClient);
   final romaneioService = RomaneioService(dioClient);
@@ -63,14 +72,16 @@ void main() async {
   final produtoService = ProdutoService(dioClient);
   final cupomService = CupomService();
   final pdfExportService = PdfExportService();
+  final cnpjConsultaService = CnpjConsultaService();
 
-  // Uma única fonte: [kDefaultIdEmpresa] em empresa_service.dart (persistido no startup).
+  // Paleta da empresa logada (ou mock antes do login).
   final palette = EmpresaPalettes.getById(empresaService.idEmpresa);
   AppColors.setCurrent(palette);
 
   runApp(
     VendasBaseApp(
       localStorageService: localStorageService,
+      authService: authService,
       empresaService: empresaService,
       dioClient: dioClient,
       clienteService: clienteService,
@@ -80,12 +91,14 @@ void main() async {
       dashboardService: dashboardService,
       cupomService: cupomService,
       pdfExportService: pdfExportService,
+      cnpjConsultaService: cnpjConsultaService,
     ),
   );
 }
 
 class VendasBaseApp extends StatefulWidget {
   final LocalStorageService localStorageService;
+  final AuthService authService;
   final EmpresaService empresaService;
   final DioClient dioClient;
   final ClienteService clienteService;
@@ -95,10 +108,12 @@ class VendasBaseApp extends StatefulWidget {
   final DashboardService dashboardService;
   final CupomService cupomService;
   final PdfExportService pdfExportService;
+  final CnpjConsultaService cnpjConsultaService;
 
   const VendasBaseApp({
     super.key,
     required this.localStorageService,
+    required this.authService,
     required this.empresaService,
     required this.dioClient,
     required this.clienteService,
@@ -108,6 +123,7 @@ class VendasBaseApp extends StatefulWidget {
     required this.dashboardService,
     required this.cupomService,
     required this.pdfExportService,
+    required this.cnpjConsultaService,
   });
 
   @override
@@ -121,8 +137,9 @@ class _VendasBaseAppState extends State<VendasBaseApp> {
   static const Duration _restartOverlayDuration = Duration(milliseconds: 500);
 
   void _triggerRestart() {
-    // Navega para Home e limpa histórico
-    appRouter.go(AppRoutes.home);
+    appRouter.go(
+      widget.authService.isAuthenticated ? AppRoutes.home : AppRoutes.login,
+    );
     final ctx = rootNavigatorKey.currentContext;
     if (ctx != null && ctx.mounted) {
       try {
@@ -144,6 +161,7 @@ class _VendasBaseAppState extends State<VendasBaseApp> {
     return MultiProvider(
       providers: [
         Provider<LocalStorageService>.value(value: widget.localStorageService),
+        ChangeNotifierProvider<AuthService>.value(value: widget.authService),
         ChangeNotifierProvider<EmpresaService>.value(value: widget.empresaService),
         Provider<DioClient>.value(value: widget.dioClient),
         Provider<ClienteService>.value(value: widget.clienteService),
@@ -153,6 +171,7 @@ class _VendasBaseAppState extends State<VendasBaseApp> {
         Provider<DashboardService>.value(value: widget.dashboardService),
         Provider<CupomService>.value(value: widget.cupomService),
         Provider<PdfExportService>.value(value: widget.pdfExportService),
+        Provider<CnpjConsultaService>.value(value: widget.cnpjConsultaService),
         Provider<AppRestartController>.value(
           value: AppRestartController(_triggerRestart),
         ),
@@ -160,8 +179,7 @@ class _VendasBaseAppState extends State<VendasBaseApp> {
           create: (_) => NavigationController(),
         ),
         ChangeNotifierProvider<HomeViewModel>(
-          create: (ctx) =>
-              HomeViewModel(ctx.read<DashboardService>())..carregarDados(),
+          create: (ctx) => HomeViewModel(ctx.read<DashboardService>()),
         ),
         ChangeNotifierProvider<ClientesViewModel>(
           create: (context) => ClientesViewModel(context.read<ClienteService>()),

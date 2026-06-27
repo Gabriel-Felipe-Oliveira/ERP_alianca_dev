@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:erp_alianca_dev/core/security/sensitive_data_sanitizer.dart';
 
 abstract class AppLogger {
   static void debug(String message, {String? tag}) {
@@ -18,7 +19,9 @@ abstract class AppLogger {
   static void error(String message, {Object? error, StackTrace? stackTrace}) {
     if (kDebugMode) {
       debugPrint('[ERROR] $message');
-      if (error != null) debugPrint('Error: $error');
+      if (error != null) {
+        debugPrint('Error: ${SensitiveDataSanitizer.sanitizeForLog(error)}');
+      }
       if (stackTrace != null) debugPrint('StackTrace: $stackTrace');
     }
   }

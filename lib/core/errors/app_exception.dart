@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:erp_alianca_dev/core/security/sensitive_data_sanitizer.dart';
 
 class AppException implements Exception {
   final String message;
@@ -29,7 +30,7 @@ class AppException implements Exception {
         return AppException(
           message: _handleStatusCode(error.response?.statusCode),
           statusCode: error.response?.statusCode,
-          data: error.response?.data,
+          data: SensitiveDataSanitizer.sanitize(error.response?.data),
         );
       case DioExceptionType.cancel:
         return const AppException(
@@ -52,7 +53,7 @@ class AppException implements Exception {
         return AppException(
           message: message,
           statusCode: statusCode,
-          data: data,
+          data: SensitiveDataSanitizer.sanitize(data),
         );
     }
   }

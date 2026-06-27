@@ -5,8 +5,22 @@ import 'package:erp_alianca_dev/features/home/viewmodel/home_viewmodel.dart';
 import 'package:erp_alianca_dev/features/home/view/home_constants.dart';
 import 'package:erp_alianca_dev/shared/widgets/section_header.dart';
 
-class HomeView extends StatelessWidget {
+class HomeView extends StatefulWidget {
   const HomeView({super.key});
+
+  @override
+  State<HomeView> createState() => _HomeViewState();
+}
+
+class _HomeViewState extends State<HomeView> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<HomeViewModel>().carregarDados();
+    });
+  }
 
   static int _getCrossAxisCount(double width) {
     final count = ((width + HomeConstants.gridSpacing) /

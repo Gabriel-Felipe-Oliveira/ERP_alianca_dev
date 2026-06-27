@@ -4,9 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:erp_alianca_dev/shared/viewmodels/base_view_model.dart';
 import 'package:flutter/services.dart';
 import 'package:erp_alianca_dev/core/errors/app_exception.dart';
+import 'package:erp_alianca_dev/features/clientes/model/cliente_criar_extra.dart';
+import 'package:erp_alianca_dev/features/clientes/model/cliente_model.dart';
 import 'package:erp_alianca_dev/features/clientes/utils/cliente_form_utils.dart';
 import 'package:erp_alianca_dev/features/clientes/utils/cliente_validator.dart';
+import 'package:erp_alianca_dev/shared/models/cnpj_consulta_model.dart';
 import 'package:erp_alianca_dev/shared/services/cliente_service.dart';
+import 'package:erp_alianca_dev/routes/app_routes.dart';
 import 'package:erp_alianca_dev/shared/services/empresa_service.dart';
 import 'package:erp_alianca_dev/shared/utils/form_utils.dart';
 
@@ -67,6 +71,65 @@ class ClienteCriarViewModel extends BaseViewModel {
 
   String _status = 'Ativo';
   String get status => _status;
+
+  bool _abrirPedidoAposSalvar = false;
+  String _rotaVoltar = AppRoutes.clientes;
+  ClienteModel? _clienteParaPedido;
+
+  bool get abrirPedidoAposSalvar => _abrirPedidoAposSalvar;
+  String get rotaVoltar => _rotaVoltar;
+  bool get veioDeConsultaCnpj =>
+      _rotaVoltar == AppRoutes.clientesConsultaCnpj;
+
+  /// Retorna e limpa o cliente localizado após salvar (fluxo pedido via CNPJ).
+  ClienteModel? takeClienteParaPedido() {
+    final cliente = _clienteParaPedido;
+    _clienteParaPedido = null;
+    return cliente;
+  }
+
+  void aplicarExtra(ClienteCriarExtra extra) {
+    _abrirPedidoAposSalvar = extra.abrirPedidoAposSalvar;
+    _rotaVoltar = extra.rotaVoltar;
+    preencherComConsultaCnpj(extra.consultaCnpj);
+  }
+
+  /// Preenche o formulário com dados retornados da consulta de CNPJ.
+  void preencherComConsultaCnpj(CnpjConsultaModel dados) {
+    _isCpf = false;
+    documentController.text =
+        ClienteModel.documentoMascaradoParaCampo('cnpj', dados.cnpj);
+    nomeController.text = dados.razaoSocial;
+    nomeEmpresaController.text = dados.nomeFantasia?.trim() ?? '';
+    _preencherTelefone(dados.telefone);
+    emailController.text = dados.email;
+    cepController.text = _formatarCep(dados.cep);
+    logradouroController.text = dados.logradouro;
+    numeroController.text = dados.numero;
+    bairroController.text = dados.bairro;
+    cidadeController.text = dados.cidade;
+    estadoController.text = dados.estado.toUpperCase();
+    _status = 'Ativo';
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  void _preencherTelefone(String telefone) {
+    final digits = telefone.replaceAll(RegExp(r'\D'), '');
+    if (digits.length <= 2) {
+      ddController.text = digits;
+      telefoneNumeroController.clear();
+      return;
+    }
+    ddController.text = digits.substring(0, 2);
+    telefoneNumeroController.text = digits.substring(2);
+  }
+
+  static String _formatarCep(String cep) {
+    final digits = cep.replaceAll(RegExp(r'\D'), '');
+    if (digits.length <= 5) return digits;
+    return '${digits.substring(0, 5)}-${digits.substring(5)}';
+  }
 
   /// Indica se há dados de cliente no clipboard (após copiar neste formulário).
   bool _temClienteCopiado = false;
@@ -252,7 +315,14 @@ class ClienteCriarViewModel extends BaseViewModel {
         status: _status,
       );
       final model = values.toModel(_empresaService.idEmpresa);
+      final documentoSalvo = _documentoDigits;
+      final buscarParaPedido = _abrirPedidoAposSalvar;
       await _clienteService.criarCliente(model);
+      if (buscarParaPedido && documentoSalvo.isNotEmpty) {
+        _clienteParaPedido =
+            await _buscarClientePorDocumento(documentoSalvo);
+      }
+      _abrirPedidoAposSalvar = false;
       limparFormulario();
       _isLoading = false;
       if (!isDisposed) notifyListeners();
@@ -268,5 +338,17 @@ class ClienteCriarViewModel extends BaseViewModel {
       if (!isDisposed) notifyListeners();
       return false;
     }
+  }
+
+  Future<ClienteModel?> _buscarClientePorDocumento(String documento) async {
+    try {
+      final clientes = await _clienteService.listarClientes(status: 'ativa');
+      for (final cliente in clientes) {
+        if (cliente.documento.replaceAll(RegExp(r'\D'), '') == documento) {
+          return cliente;
+        }
+      }
+    } catch (_) {}
+    return null;
   }
 }

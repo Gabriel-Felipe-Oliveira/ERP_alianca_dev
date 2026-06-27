@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:erp_alianca_dev/features/clientes/model/cliente_criar_extra.dart';
+import 'package:erp_alianca_dev/features/clientes/view/cliente_consulta_cnpj_view.dart';
 import 'package:erp_alianca_dev/features/clientes/view/cliente_criar_view.dart';
 import 'package:erp_alianca_dev/features/clientes/view/cliente_detalhes_view.dart';
+import 'package:erp_alianca_dev/features/clientes/viewmodel/cliente_consulta_cnpj_viewmodel.dart';
 import 'package:erp_alianca_dev/features/clientes/viewmodel/cliente_criar_viewmodel.dart';
 import 'package:erp_alianca_dev/features/clientes/model/cliente_model.dart';
 import 'package:erp_alianca_dev/features/clientes/viewmodel/cliente_editar_viewmodel.dart';
 import 'package:erp_alianca_dev/shared/services/cliente_service.dart';
+import 'package:erp_alianca_dev/shared/services/cnpj_consulta_service.dart';
 import 'package:erp_alianca_dev/shared/services/cupom_service.dart';
 import 'package:erp_alianca_dev/shared/services/empresa_service.dart';
 import 'package:erp_alianca_dev/shared/services/pedido_service.dart';
@@ -32,6 +36,9 @@ import 'package:erp_alianca_dev/features/romaneio/viewmodel/romaneio_criar_viewm
 import 'package:erp_alianca_dev/features/romaneio/viewmodel/romaneio_detalhe_viewmodel.dart';
 import 'package:erp_alianca_dev/routes/app_routes.dart';
 import 'package:erp_alianca_dev/shared/services/romaneio_service.dart';
+import 'package:erp_alianca_dev/features/login/view/login_view.dart';
+import 'package:erp_alianca_dev/features/login/viewmodel/login_viewmodel.dart';
+import 'package:erp_alianca_dev/shared/services/auth_service.dart';
 import 'package:erp_alianca_dev/shared/viewmodels/navigation_controller.dart';
 
 /// Chave de navegação global para acessar o contexto do router.
@@ -63,12 +70,39 @@ CustomTransitionPage<void> _fadePage({
   );
 }
 
-final GoRouter appRouter = GoRouter(
+late final GoRouter appRouter;
+
+void initAppRouter(AuthService authService) {
+  appRouter = GoRouter(
   navigatorKey: rootNavigatorKey,
-  initialLocation: AppRoutes.home,
+  initialLocation: AppRoutes.login,
   debugLogDiagnostics: true,
   observers: [routeObserver],
+  refreshListenable: authService,
+  redirect: (context, state) {
+    final loggedIn = authService.isAuthenticated;
+    final onLogin = state.matchedLocation == AppRoutes.login;
+
+    if (!loggedIn) {
+      return onLogin ? null : AppRoutes.login;
+    }
+    if (onLogin) {
+      return AppRoutes.home;
+    }
+    return null;
+  },
   routes: [
+    GoRoute(
+      path: AppRoutes.login,
+      name: 'login',
+      pageBuilder: (context, state) {
+        final child = ChangeNotifierProvider<LoginViewModel>(
+          create: (ctx) => LoginViewModel(ctx.read<AuthService>()),
+          child: const LoginView(),
+        );
+        return _fadePage(state: state, child: child);
+      },
+    ),
     // ShellRoute mantém a sidebar fixa enquanto o conteúdo muda
     ShellRoute(
       builder: (context, state, child) {
@@ -89,15 +123,35 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) => const ClientesView(),
           routes: [
             GoRoute(
+              path: 'consultar-cnpj',
+              name: 'clientes-consultar-cnpj',
+              pageBuilder: (context, state) {
+                final child =
+                    ChangeNotifierProvider<ClienteConsultaCnpjViewModel>(
+                  create: (ctx) => ClienteConsultaCnpjViewModel(
+                    ctx.read<CnpjConsultaService>(),
+                  ),
+                  child: const ClienteConsultaCnpjView(),
+                );
+                return _fadePage(state: state, child: child);
+              },
+            ),
+            GoRoute(
               path: 'criar',
               name: 'clientes-criar',
               pageBuilder: (context, state) {
+                final extra = state.extra is ClienteCriarExtra
+                    ? state.extra as ClienteCriarExtra
+                    : null;
                 final child = ChangeNotifierProvider<ClienteCriarViewModel>(
                   create: (ctx) => ClienteCriarViewModel(
                     ctx.read<ClienteService>(),
                     ctx.read<EmpresaService>(),
                   ),
-                  child: const ClienteCriarView(),
+                  child: _ClienteCriarInicializador(
+                    extra: extra,
+                    child: const ClienteCriarView(),
+                  ),
                 );
                 return _fadePage(state: state, child: child);
               },
@@ -274,7 +328,41 @@ final GoRouter appRouter = GoRouter(
       ],
     ),
   ],
-);
+  );
+}
+
+VoidCallback? _listenerRota;
+
+/// Inicializa o [ClienteCriarViewModel] com dados da consulta CNPJ, quando aplicável.
+class _ClienteCriarInicializador extends StatefulWidget {
+  const _ClienteCriarInicializador({
+    required this.child,
+    this.extra,
+  });
+
+  final Widget child;
+  final ClienteCriarExtra? extra;
+
+  @override
+  State<_ClienteCriarInicializador> createState() =>
+      _ClienteCriarInicializadorState();
+}
+
+class _ClienteCriarInicializadorState extends State<_ClienteCriarInicializador> {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.extra != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<ClienteCriarViewModel>().aplicarExtra(widget.extra!);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
 
 /// Inicializa o [PedidoCriarViewModel] com cliente pré-selecionado quando a tela é aberta a partir dos detalhes do cliente.
 class _PedidoCriarInicializador extends StatefulWidget {
@@ -306,8 +394,6 @@ class _PedidoCriarInicializadorState extends State<_PedidoCriarInicializador> {
   @override
   Widget build(BuildContext context) => widget.child;
 }
-
-VoidCallback? _listenerRota;
 
 /// Registra o listener que alimenta o histórico do [NavigationController].
 /// Remove o listener anterior (ex.: após restart do app) antes de adicionar o novo.

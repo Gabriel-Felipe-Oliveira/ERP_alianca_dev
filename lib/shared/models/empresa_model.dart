@@ -56,4 +56,23 @@ class EmpresaModel {
       updatedAt: json['updated_at'] as String?,
     );
   }
+
+  /// Empresa retornada no login (campos reduzidos).
+  factory EmpresaModel.fromLoginJson(Map<String, dynamic> json) {
+    return EmpresaModel(
+      idEmpresa: json['id_empresa'] as int? ?? 0,
+      razaoSocial: json['razao_social'] as String? ?? '',
+      nomeFantasia: json['nome_fantasia'] as String? ?? '',
+      cnpj: json['cnpj'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      telefone: json['telefone'] as String? ?? '',
+      cep: json['cep'] as String? ?? '',
+      logradouro: json['logradouro'] as String? ?? '',
+      numero: json['numero'] as String? ?? '',
+      bairro: json['bairro'] as String? ?? '',
+      cidade: json['cidade'] as String? ?? '',
+      estado: json['estado'] as String? ?? '',
+      status: json['status'] as String? ?? 'ativa',
+    );
+  }
 }

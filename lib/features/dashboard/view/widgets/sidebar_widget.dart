@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
 import 'package:erp_alianca_dev/shared/theme/app_text_styles.dart';
 import 'package:erp_alianca_dev/features/dashboard/view/widgets/sidebar_menu_item.dart';
 import 'package:erp_alianca_dev/features/dashboard/view/widgets/sidebar/sidebar_constants.dart';
+import 'package:erp_alianca_dev/shared/services/auth_service.dart';
 import 'package:erp_alianca_dev/routes/app_routes.dart';
 
 class SidebarWidget extends StatefulWidget {
@@ -87,6 +89,13 @@ class _SidebarWidgetState extends State<SidebarWidget> {
                       route: AppRoutes.clientes,
                       isSelected: currentLocation == AppRoutes.clientes,
                       onTap: () => context.go(AppRoutes.clientes),
+                    ),
+                    SidebarSubItem(
+                      title: 'CNPJ',
+                      route: AppRoutes.clientesConsultaCnpj,
+                      isSelected:
+                          currentLocation == AppRoutes.clientesConsultaCnpj,
+                      onTap: () => context.go(AppRoutes.clientesConsultaCnpj),
                     ),
                     SidebarSubItem(
                       title: 'Criar',
@@ -259,12 +268,65 @@ class _SidebarWidgetState extends State<SidebarWidget> {
   }
 
   Widget _buildFooter() {
-    return Text(
-      'v1.0.0',
-      style: AppTextStyles.caption.copyWith(
-        color: AppColors.sidebarTextMuted,
-        fontWeight: FontWeight.w500,
-      ),
+    final auth = context.watch<AuthService>();
+    final usuario = auth.usuario;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (usuario != null) ...[
+          Text(
+            usuario.nome,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.sidebarTextActive,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            usuario.email,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.sidebarTextMuted,
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+        TextButton.icon(
+          onPressed: () async {
+            final router = GoRouter.of(context);
+            await auth.logout();
+            if (!context.mounted) return;
+            router.go(AppRoutes.login);
+          },
+          icon: Icon(
+            Icons.logout,
+            size: 18,
+            color: AppColors.sidebarTextMuted,
+          ),
+          label: Text(
+            'Sair',
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.sidebarTextMuted,
+            ),
+          ),
+          style: TextButton.styleFrom(
+            alignment: Alignment.centerLeft,
+            padding: EdgeInsets.zero,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'v1.0.0',
+          style: AppTextStyles.caption.copyWith(
+            color: AppColors.sidebarTextMuted,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 }

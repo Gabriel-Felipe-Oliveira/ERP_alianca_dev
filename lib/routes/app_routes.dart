@@ -1,9 +1,13 @@
 abstract class AppRoutes {
+  // Auth
+  static const String login = '/login';
+
   // Home
   static const String home = '/';
 
   // Clientes
   static const String clientes = '/clientes';
+  static const String clientesConsultaCnpj = '/clientes/consultar-cnpj';
   static const String clientesCriar = '/clientes/criar';
   static const String clientesDetalhes = '/clientes/detalhes';
 

@@ -6,13 +6,14 @@ import 'package:erp_alianca_dev/features/home/model/home_model.dart';
 import 'package:erp_alianca_dev/features/home/view/home_constants.dart';
 import 'package:erp_alianca_dev/features/home/view/home_view.dart';
 import 'package:erp_alianca_dev/features/home/viewmodel/home_viewmodel.dart';
-import 'package:erp_alianca_dev/shared/services/dashboard_service.dart';
+import 'helpers/mock_dio_client.dart';
 import 'package:erp_alianca_dev/core/network/dio_client.dart';
+import 'package:erp_alianca_dev/shared/services/dashboard_service.dart';
 import 'package:erp_alianca_dev/shared/services/empresa_service.dart';
 import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
 
 class FakeDashboardService extends DashboardService {
-  FakeDashboardService() : super(DioClient(EmpresaService()));
+  FakeDashboardService() : super(DioClient(EmpresaService(), createTestAuthService(EmpresaService())));
 
   @override
   Future<DashboardResumoModel> buscarResumo() async => const DashboardResumoModel(

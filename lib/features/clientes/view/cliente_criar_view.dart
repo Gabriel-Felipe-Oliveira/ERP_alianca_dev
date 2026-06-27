@@ -95,8 +95,10 @@ class _ClienteCriarViewState extends State<ClienteCriarView>
                                   children: [
                                 SectionHeader(
                                   title: 'Criar Cliente',
-                                  description: 'Preencha os dados para cadastrar um novo cliente.',
-                                  onBack: () => context.go(AppRoutes.clientes),
+                                  description: vm.veioDeConsultaCnpj
+                                      ? 'Revise os dados da Receita Federal e cadastre o cliente.'
+                                      : 'Preencha os dados para cadastrar um novo cliente.',
+                                  onBack: () => context.go(vm.rotaVoltar),
                                 ),
                                 if (vm.temClienteCopiado)
                                   Padding(
@@ -171,8 +173,13 @@ class _ClienteCriarViewState extends State<ClienteCriarView>
     final sucesso = await vm.salvar();
     if (!context.mounted) return;
     if (sucesso) {
+      final clientePedido = vm.takeClienteParaPedido();
       showAppToast(context, message: 'Cliente criado com sucesso.');
-      context.go(AppRoutes.clientes);
+      if (clientePedido != null) {
+        context.go(AppRoutes.pedidosCriar, extra: clientePedido);
+      } else {
+        context.go(AppRoutes.clientes);
+      }
     }
   }
 
@@ -288,7 +295,7 @@ class _ClienteCriarViewState extends State<ClienteCriarView>
       ),
     ).then((sair) {
       if (sair == true && context.mounted) {
-        context.go(AppRoutes.clientes);
+        context.go(vm.rotaVoltar);
       }
     });
   }

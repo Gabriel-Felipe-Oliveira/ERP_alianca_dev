@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import '../../../helpers/mock_dio_client.dart';
 import 'package:erp_alianca_dev/core/network/dio_client.dart';
 import 'package:erp_alianca_dev/features/clientes/model/cliente_model.dart';
 import 'package:erp_alianca_dev/features/clientes/viewmodel/clientes_viewmodel.dart';
@@ -7,7 +8,11 @@ import 'package:erp_alianca_dev/shared/services/cliente_service.dart';
 import 'package:erp_alianca_dev/shared/services/empresa_service.dart';
 
 class FakeClienteService extends ClienteService {
-  FakeClienteService() : super(DioClient(EmpresaService()));
+  FakeClienteService()
+      : super(DioClient(
+          EmpresaService(),
+          createTestAuthService(EmpresaService()),
+        ));
 
   PaginatedResult<ClienteModel>? paginatedResult;
   int listarCalls = 0;
