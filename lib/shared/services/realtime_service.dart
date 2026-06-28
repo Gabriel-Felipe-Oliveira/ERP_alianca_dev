@@ -50,8 +50,7 @@ class RealtimeService {
       _startHeartbeat();
     } catch (e, st) {
       AppLogger.error(
-        'Falha ao conectar WebSocket',
-        tag: _tag,
+        '[$_tag] Falha ao conectar WebSocket',
         error: e,
         stackTrace: st,
       );
@@ -133,8 +132,7 @@ class RealtimeService {
       }
     } catch (e, st) {
       AppLogger.error(
-        'Erro ao parsear mensagem WebSocket',
-        tag: _tag,
+        '[$_tag] Erro ao parsear mensagem WebSocket',
         error: e,
         stackTrace: st,
       );
@@ -148,8 +146,7 @@ class RealtimeService {
 
   void _onError(Object error, [StackTrace? stackTrace]) {
     AppLogger.error(
-      'WebSocket erro',
-      tag: _tag,
+      '[$_tag] WebSocket erro',
       error: error,
       stackTrace: stackTrace,
     );

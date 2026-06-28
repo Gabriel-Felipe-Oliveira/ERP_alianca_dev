@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
 import 'package:erp_alianca_dev/shared/viewmodels/theme_palette_provider.dart';
-import 'package:erp_alianca_dev/shared/utils/app_hard_restart.dart';import 'package:erp_alianca_dev/shared/widgets/app_theme_mode_toggle.dart';
+import 'package:erp_alianca_dev/shared/utils/app_hard_restart.dart';
+import 'package:erp_alianca_dev/shared/widgets/app_theme_mode_toggle.dart';
 import 'package:window_manager/window_manager.dart';
 
 /// Barra de título customizada que substitui a nativa do Windows.
@@ -19,7 +20,8 @@ class CustomTitleBar extends StatelessWidget {
   Widget build(BuildContext context) {
     context.watch<ThemePaletteProvider>();
 
-    return Container(      height: height,
+    return Container(
+      height: height,
       color: AppColors.sidebarBackground,
       child: Row(
         children: [

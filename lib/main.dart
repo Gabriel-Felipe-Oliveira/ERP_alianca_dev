@@ -20,11 +20,12 @@ import 'package:erp_alianca_dev/shared/services/cnpj_consulta_service.dart';
 import 'package:erp_alianca_dev/shared/services/cupom_service.dart';
 import 'package:erp_alianca_dev/shared/services/dashboard_service.dart';
 import 'package:erp_alianca_dev/shared/services/empresa_service.dart';
+import 'package:erp_alianca_dev/shared/services/local_storage_service.dart';
 import 'package:erp_alianca_dev/shared/services/pedido_service.dart';
 import 'package:erp_alianca_dev/shared/services/pdf_export_service.dart';
-import 'package:erp_alianca_dev/shared/services/romaneio_service.dart';
 import 'package:erp_alianca_dev/shared/services/realtime_service.dart';
-import 'package:erp_alianca_dev/shared/utils/app_restart_controller.dart';
+import 'package:erp_alianca_dev/shared/services/romaneio_service.dart';
+import 'package:erp_alianca_dev/shared/utils/app_hard_restart.dart';
 import 'package:erp_alianca_dev/shared/utils/pdf_utils.dart';
 import 'package:erp_alianca_dev/shared/viewmodels/navigation_controller.dart';
 import 'package:erp_alianca_dev/shared/viewmodels/notifications_viewmodel.dart';
@@ -32,9 +33,7 @@ import 'package:erp_alianca_dev/shared/viewmodels/theme_palette_provider.dart';
 import 'package:window_manager/window_manager.dart';
 
 void main() async {
-  // Obrigatório antes de qualquer uso de assets/Flutter APIs.
   WidgetsFlutterBinding.ensureInitialized();
-  // Permite ao binding concluir antes de qualquer acesso a assets (evita erro AssetManifest no Flutter 3.19+).
   await Future<void>.delayed(Duration.zero);
 
   await windowManager.ensureInitialized();
@@ -75,10 +74,10 @@ void main() async {
   final cnpjConsultaService = CnpjConsultaService();
   final realtimeService = RealtimeService();
 
-  // Paleta da empresa logada (ou mock antes do login).
   final basePalette = EmpresaPalettes.getById(empresaService.idEmpresa);
   final isLightMode =
-      localStorageService.getBool(LocalStorageService.themeLightModeKey) ?? false;
+      localStorageService.getBool(LocalStorageService.themeLightModeKey) ??
+          false;
   AppColors.setCurrent(
     isLightMode ? EmpresaPalette.lightFrom(basePalette) : basePalette,
   );
@@ -178,6 +177,7 @@ class _VendasBaseAppState extends State<VendasBaseApp> {
         Provider<CupomService>.value(value: widget.cupomService),
         Provider<PdfExportService>.value(value: widget.pdfExportService),
         Provider<CnpjConsultaService>.value(value: widget.cnpjConsultaService),
+        Provider<RealtimeService>.value(value: widget.realtimeService),
       ],
       child: KeyedSubtree(
         key: ValueKey<int>(_softRestartKey),
@@ -209,6 +209,13 @@ class _VendasBaseAppState extends State<VendasBaseApp> {
               create: (ctx) => ThemePaletteProvider(
                 ctx.read<EmpresaService>(),
                 ctx.read<LocalStorageService>(),
+              ),
+            ),
+            ChangeNotifierProvider<NotificationsViewModel>(
+              create: (ctx) => NotificationsViewModel(
+                ctx.read<RealtimeService>(),
+                ctx.read<AuthService>(),
+                ctx.read<EmpresaService>(),
               ),
             ),
           ],
