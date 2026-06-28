@@ -23,10 +23,11 @@ import 'package:erp_alianca_dev/shared/services/empresa_service.dart';
 import 'package:erp_alianca_dev/shared/services/pedido_service.dart';
 import 'package:erp_alianca_dev/shared/services/pdf_export_service.dart';
 import 'package:erp_alianca_dev/shared/services/romaneio_service.dart';
-import 'package:erp_alianca_dev/shared/services/local_storage_service.dart';
-import 'package:erp_alianca_dev/shared/utils/app_hard_restart.dart';
+import 'package:erp_alianca_dev/shared/services/realtime_service.dart';
+import 'package:erp_alianca_dev/shared/utils/app_restart_controller.dart';
 import 'package:erp_alianca_dev/shared/utils/pdf_utils.dart';
 import 'package:erp_alianca_dev/shared/viewmodels/navigation_controller.dart';
+import 'package:erp_alianca_dev/shared/viewmodels/notifications_viewmodel.dart';
 import 'package:erp_alianca_dev/shared/viewmodels/theme_palette_provider.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -72,6 +73,7 @@ void main() async {
   final cupomService = CupomService();
   final pdfExportService = PdfExportService();
   final cnpjConsultaService = CnpjConsultaService();
+  final realtimeService = RealtimeService();
 
   // Paleta da empresa logada (ou mock antes do login).
   final basePalette = EmpresaPalettes.getById(empresaService.idEmpresa);
@@ -95,6 +97,7 @@ void main() async {
       cupomService: cupomService,
       pdfExportService: pdfExportService,
       cnpjConsultaService: cnpjConsultaService,
+      realtimeService: realtimeService,
     ),
   );
 }
@@ -112,6 +115,7 @@ class VendasBaseApp extends StatefulWidget {
   final CupomService cupomService;
   final PdfExportService pdfExportService;
   final CnpjConsultaService cnpjConsultaService;
+  final RealtimeService realtimeService;
 
   const VendasBaseApp({
     super.key,
@@ -127,6 +131,7 @@ class VendasBaseApp extends StatefulWidget {
     required this.cupomService,
     required this.pdfExportService,
     required this.cnpjConsultaService,
+    required this.realtimeService,
   });
 
   @override
