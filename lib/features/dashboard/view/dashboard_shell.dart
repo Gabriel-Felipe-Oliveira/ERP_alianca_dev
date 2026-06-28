@@ -5,6 +5,7 @@ import 'package:erp_alianca_dev/features/dashboard/view/widgets/sidebar/sidebar_
 import 'package:erp_alianca_dev/features/dashboard/view/widgets/sidebar_widget.dart';
 import 'package:erp_alianca_dev/shared/utils/app_restart_controller.dart';
 import 'package:erp_alianca_dev/shared/widgets/custom_title_bar.dart';
+import 'package:erp_alianca_dev/shared/widgets/realtime_notification_listener.dart';
 import 'package:erp_alianca_dev/shared/widgets/reload_progress_overlay.dart';
 
 class DashboardShell extends StatefulWidget {
@@ -48,42 +49,42 @@ class _DashboardShellState extends State<DashboardShell>
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      child: Scaffold(
-        backgroundColor: AppColors.contentBackground,
-        body: Column(
-        children: [
-          // Barra de título: Atualizar = restart do app (útil em caso de erro)
-          CustomTitleBar(
-            onRefresh: () => context.read<AppRestartController>().restartApp(),
-            onRestart: () => context.read<AppRestartController>().restartApp(),
-          ),
-
-          // Conteúdo principal (sidebar + área de conteúdo)
-          Expanded(
-            child: Row(
-              children: [
-                const SidebarWidget(),
-
-                Expanded(
-                  child: ReloadProgressOverlay(
-                    child: Container(
-                      color: AppColors.contentBackground,
-                      child: FadeTransition(
-                        opacity: CurvedAnimation(
-                          parent: _controller,
-                          curve: SidebarConstants.expandAnimationCurve,
+      child: RealtimeNotificationListener(
+        child: Scaffold(
+          backgroundColor: AppColors.contentBackground,
+          body: Column(
+            children: [
+              CustomTitleBar(
+                onRefresh: () =>
+                    context.read<AppRestartController>().restartApp(),
+                onRestart: () =>
+                    context.read<AppRestartController>().restartApp(),
+              ),
+              Expanded(
+                child: Row(
+                  children: [
+                    const SidebarWidget(),
+                    Expanded(
+                      child: ReloadProgressOverlay(
+                        child: Container(
+                          color: AppColors.contentBackground,
+                          child: FadeTransition(
+                            opacity: CurvedAnimation(
+                              parent: _controller,
+                              curve: SidebarConstants.expandAnimationCurve,
+                            ),
+                            child: widget.child,
+                          ),
                         ),
-                        child: widget.child,
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
-    ),
     );
   }
 }

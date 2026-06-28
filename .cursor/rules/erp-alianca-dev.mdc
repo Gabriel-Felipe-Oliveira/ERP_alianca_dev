@@ -235,3 +235,15 @@ test/
 - [ ] Nada sensível em logs ou `toString`?
 - [ ] Testes atualizados ou justificativa clara?
 - [ ] Desvio da regra documentado e aprovado?
+
+---
+
+## 13. Git — commit e push
+
+Quando o usuário pedir para **commitar** (ex.: "commita", "dá commit", "sobe isso"):
+
+- **Executar direto** — sem pedir confirmação extra, sem perguntar mensagem, branch ou se deve fazer push.
+- **Fluxo padrão:** `git status` + `git diff` → stage dos arquivos relevantes → commit com mensagem concisa (1–2 frases, foco no *porquê*) → **`git push`** na branch atual.
+- **Não commitar** arquivos com segredos (`.env`, credenciais, tokens).
+- **Não usar** `--no-verify`, amend ou force push, salvo pedido explícito do usuário.
+- Se não houver alterações, informar brevemente — sem insistir em criar commit vazio.
