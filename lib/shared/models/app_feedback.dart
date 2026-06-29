@@ -31,12 +31,17 @@ class AppFeedbackMessage {
     required this.type,
     this.duration,
     this.title,
+    this.actionLabel,
+    this.onAction,
   });
 
   final String message;
   final AppFeedbackType type;
   final Duration? duration;
   final String? title;
+  /// Rótulo opcional de ação secundária (ex.: "Ver pedido" em notificações).
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   Duration get displayDuration => duration ?? AppFeedbackDurations.forType(type);
 
@@ -75,12 +80,16 @@ class AppFeedbackMessage {
     String message, {
     Duration? duration,
     String? title,
+    String? actionLabel,
+    VoidCallback? onAction,
   }) =>
       AppFeedbackMessage(
         message: message,
         type: AppFeedbackType.info,
         duration: duration,
         title: title,
+        actionLabel: actionLabel,
+        onAction: onAction,
       );
 
   factory AppFeedbackMessage.warning(

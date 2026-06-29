@@ -90,5 +90,18 @@ void main() {
         'Falha',
       );
     });
+
+    test('info aceita ação secundária opcional', () {
+      var actionCalled = false;
+      final feedback = AppFeedbackMessage.info(
+        'Pedido #10',
+        actionLabel: 'Ver pedido',
+        onAction: () => actionCalled = true,
+      );
+
+      expect(feedback.actionLabel, 'Ver pedido');
+      feedback.onAction?.call();
+      expect(actionCalled, isTrue);
+    });
   });
 }

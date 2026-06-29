@@ -1,68 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:erp_alianca_dev/core/errors/app_exception.dart';
-import 'package:erp_alianca_dev/core/network/dio_client.dart';
-import 'package:erp_alianca_dev/features/clientes/model/cliente_model.dart';
 import 'package:erp_alianca_dev/features/pedidos/model/pedido_model.dart';
 import 'package:erp_alianca_dev/features/pedidos/viewmodel/pedidos_viewmodel.dart';
 import 'package:erp_alianca_dev/shared/models/base_state.dart';
 import 'package:erp_alianca_dev/shared/models/paginated_result.dart';
-import 'package:erp_alianca_dev/shared/services/cliente_service.dart';
-import 'package:erp_alianca_dev/shared/services/empresa_service.dart';
-import 'package:erp_alianca_dev/shared/services/pedido_service.dart';
 
-import '../../../helpers/mock_dio_client.dart';
-
-DioClient _bareClient() =>
-    DioClient(EmpresaService(), createTestAuthService(EmpresaService()));
-
-class FakePedidoService extends PedidoService {
-  FakePedidoService() : super(_bareClient());
-
-  PaginatedResult<PedidoListagemModel>? resultado;
-  AppException? erroAoListar;
-  int listarCalls = 0;
-
-  @override
-  Future<PaginatedResult<PedidoListagemModel>> listarPedidosPaginado({
-    required int page,
-    int limit = 20,
-    String? status,
-    int? idCliente,
-  }) async {
-    listarCalls++;
-    if (erroAoListar != null) throw erroAoListar!;
-    return resultado ??
-        PaginatedResult(
-          items: const [],
-          page: page,
-          limit: limit,
-          total: 0,
-          hasMore: false,
-        );
-  }
-}
-
-class FakeClienteService extends ClienteService {
-  FakeClienteService() : super(_bareClient());
-
-  final Map<int, String> nomes = {};
-
-  @override
-  Future<ClienteModel> buscarClientePorId(int id) async {
-    return ClienteModel(
-      id: id,
-      nome: nomes[id] ?? 'Cliente $id',
-      telefone: '',
-      email: '',
-      cep: '',
-      logradouro: '',
-      numero: '',
-      bairro: '',
-      cidade: '',
-      estado: 'MG',
-    );
-  }
-}
+import '../../../helpers/fake_services.dart';
 
 PedidoListagemModel _pedido({
   required int idPedido,

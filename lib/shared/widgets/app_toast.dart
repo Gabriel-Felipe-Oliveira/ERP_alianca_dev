@@ -218,28 +218,61 @@ class _AppFeedbackOverlayState extends State<_AppFeedbackOverlay>
                     ),
                     Padding(
                       padding: const EdgeInsets.all(AppSpacing.lg),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: AppSpacing.buttonHeight,
-                        child: ElevatedButton(
-                          onPressed: _dismiss,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: AppColors.textPrimary,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(AppRadius.button),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (widget.feedback.actionLabel != null &&
+                              widget.feedback.onAction != null) ...[
+                            SizedBox(
+                              height: AppSpacing.buttonHeight,
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  widget.feedback.onAction!();
+                                  _dismiss();
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.primary,
+                                  side: BorderSide(color: AppColors.primary),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.button),
+                                  ),
+                                ),
+                                child: Text(
+                                  widget.feedback.actionLabel!,
+                                  style: AppTextStyles.button.copyWith(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                          ],
+                          SizedBox(
+                            width: double.infinity,
+                            height: AppSpacing.buttonHeight,
+                            child: ElevatedButton(
+                              onPressed: _dismiss,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: AppColors.textPrimary,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.button),
+                                ),
+                              ),
+                              child: Text(
+                                'OK',
+                                style: AppTextStyles.button.copyWith(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                             ),
                           ),
-                          child: Text(
-                            'OK',
-                            style: AppTextStyles.button.copyWith(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
+                        ],
                       ),
                     ),
                   ],

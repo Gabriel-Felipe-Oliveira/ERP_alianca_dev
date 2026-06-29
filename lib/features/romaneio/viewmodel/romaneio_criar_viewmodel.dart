@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:erp_alianca_dev/core/errors/app_exception.dart';
 import 'package:erp_alianca_dev/shared/viewmodels/base_view_model.dart';
 import 'package:erp_alianca_dev/features/pedidos/model/pedido_model.dart';
 import 'package:erp_alianca_dev/features/romaneio/model/romaneio_model.dart';
@@ -329,6 +330,7 @@ class RomaneioCriarViewModel extends BaseViewModel {
   }
 
   String _mensagemErroAmigavel(Object e) {
+    if (e is AppException) return e.message;
     final msg = e.toString().toLowerCase();
     if (msg.contains('timeout') || msg.contains('connection')) {
       return 'Tempo esgotado. Verifique sua conexão.';
