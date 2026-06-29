@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:erp_alianca_dev/features/pedidos/view/widgets/pedido_criar/pedido_criar_tabela_row_layout.dart';
 import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
 import 'package:erp_alianca_dev/shared/theme/app_text_styles.dart';
+import 'package:erp_alianca_dev/shared/widgets/app_tooltip.dart';
 import 'package:erp_alianca_dev/shared/widgets/pedido_item/pedido_item_inline_qtd_field.dart';
 import 'package:erp_alianca_dev/shared/widgets/pedido_item/pedido_item_inline_valor_field.dart';
 
@@ -159,7 +160,7 @@ class _PedidoCriarItemTableRowState extends State<PedidoCriarItemTableRow> {
             color: AppColors.error,
             size: 20,
           ),
-          tooltip: 'Remover',
+          tooltip: windowsSafeTooltip('Remover'),
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
         ),

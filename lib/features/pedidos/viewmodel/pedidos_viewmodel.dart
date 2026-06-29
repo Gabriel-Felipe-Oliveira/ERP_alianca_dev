@@ -97,17 +97,22 @@ class PedidosViewModel extends BaseViewModel {
       await _resolverNomesClientes(idsCliente);
 
       _state = ViewState.success;
-    } on AppException catch (e) {
-      if (isDisposed) return;
-      _errorMessage = e.message;
-      _state = ViewState.error;
     } catch (e) {
       if (isDisposed) return;
-      _errorMessage = BaseViewModel.userMessage(
+      final msg = BaseViewModel.readErrorForUi(
         e,
-        'Erro ao carregar pedidos. Tente novamente.',
+        tag: 'PedidosViewModel',
+        fallback: 'Erro ao carregar pedidos. Tente novamente.',
       );
-      _state = ViewState.error;
+      if (msg == null) {
+        _pedidos.clear();
+        _nomesClientes.clear();
+        _pagination.reset();
+        _state = ViewState.success;
+      } else {
+        _errorMessage = msg;
+        _state = ViewState.error;
+      }
     }
     notifyListeners();
   }

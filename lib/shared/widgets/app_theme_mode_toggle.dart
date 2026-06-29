@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:erp_alianca_dev/features/dashboard/view/widgets/sidebar/sidebar_interactive.dart';
 import 'package:erp_alianca_dev/features/dashboard/view/widgets/sidebar/sidebar_simple_menu_item.dart';
 import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
+import 'package:erp_alianca_dev/shared/widgets/app_tooltip.dart';
 import 'package:erp_alianca_dev/shared/theme/app_spacing.dart';
 import 'package:erp_alianca_dev/shared/viewmodels/theme_palette_provider.dart';
 
@@ -32,13 +33,13 @@ class _AppThemeModeToggleState extends State<AppThemeModeToggle> {
     final label = isLight ? 'Modo escuro' : 'Modo claro';
 
     if (widget.iconOnly) {
-      return Tooltip(
+      return AppTooltip(
         message: label,
         child: IconButton(
           onPressed: themePalette.toggleThemeMode,
           icon: Icon(icon, size: 20),
           color: AppColors.textSecondary,
-          tooltip: label,
+          tooltip: windowsSafeTooltip(label),
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
         ),

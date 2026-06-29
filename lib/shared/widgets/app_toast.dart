@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:erp_alianca_dev/shared/models/app_feedback.dart';
@@ -151,7 +152,7 @@ class _AppFeedbackOverlayState extends State<_AppFeedbackOverlay>
   Widget build(BuildContext context) {
     final accent = widget.feedback.accentColor;
 
-    return Material(
+    final overlay = Material(
       color: Colors.transparent,
       child: Stack(
         alignment: Alignment.center,
@@ -249,6 +250,11 @@ class _AppFeedbackOverlayState extends State<_AppFeedbackOverlay>
         ],
       ),
     );
+
+    if (Platform.isWindows) {
+      return ExcludeSemantics(child: overlay);
+    }
+    return overlay;
   }
 }
 

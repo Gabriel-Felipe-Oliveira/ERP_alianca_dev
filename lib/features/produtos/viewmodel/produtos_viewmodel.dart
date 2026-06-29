@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:erp_alianca_dev/core/errors/app_exception.dart';
 import 'package:erp_alianca_dev/features/produtos/model/produto_model.dart';
 import 'package:erp_alianca_dev/shared/models/base_state.dart';
 import 'package:erp_alianca_dev/shared/services/produto_service.dart';
@@ -67,17 +66,21 @@ class ProdutosViewModel extends BaseViewModel {
       if (isDisposed) return;
       _pagination.applyFirstPage(result, _produtosTodos);
       _state = ViewState.success;
-    } on AppException catch (e) {
-      if (isDisposed) return;
-      _errorMessage = e.message;
-      _state = ViewState.error;
     } catch (e) {
       if (isDisposed) return;
-      _errorMessage = BaseViewModel.userMessage(
+      final msg = BaseViewModel.readErrorForUi(
         e,
-        'Erro ao carregar produtos. Tente novamente.',
+        tag: 'ProdutosViewModel',
+        fallback: 'Erro ao carregar produtos. Tente novamente.',
       );
-      _state = ViewState.error;
+      if (msg == null) {
+        _produtosTodos.clear();
+        _pagination.reset();
+        _state = ViewState.success;
+      } else {
+        _errorMessage = msg;
+        _state = ViewState.error;
+      }
     }
     notifyListeners();
   }
@@ -119,13 +122,17 @@ class ProdutosViewModel extends BaseViewModel {
       if (isDisposed) return;
       _paginationBusca.applyFirstPage(result, _produtosBusca);
       _stateBusca = ViewState.success;
-    } on AppException catch (_) {
-      if (isDisposed) return;
-      _stateBusca = ViewState.error;
     } catch (e) {
       if (isDisposed) return;
-      BaseViewModel.logFailure(e, tag: 'ProdutosViewModel.buscar');
-      _stateBusca = ViewState.error;
+      if (BaseViewModel.isSilentNotFound(e)) {
+        BaseViewModel.logFailure(e, tag: 'ProdutosViewModel.buscar');
+        _produtosBusca.clear();
+        _paginationBusca.reset();
+        _stateBusca = ViewState.success;
+      } else {
+        BaseViewModel.logFailure(e, tag: 'ProdutosViewModel.buscar');
+        _stateBusca = ViewState.error;
+      }
     }
     notifyListeners();
   }

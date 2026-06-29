@@ -6,6 +6,7 @@ import 'package:erp_alianca_dev/core/constants/app_constants.dart';
 import 'package:erp_alianca_dev/core/errors/app_exception.dart';
 import 'package:erp_alianca_dev/features/login/model/auth_session_model.dart';
 import 'package:erp_alianca_dev/features/login/model/usuario_model.dart';
+import 'package:erp_alianca_dev/features/login/utils/user_perfil.dart';
 import 'package:erp_alianca_dev/shared/services/auth_storage_service.dart';
 import 'package:erp_alianca_dev/shared/services/empresa_service.dart';
 import 'package:erp_alianca_dev/shared/services/local_storage_service.dart';
@@ -43,6 +44,10 @@ class AuthService extends ChangeNotifier {
   AuthSessionModel? get session => _session;
   UsuarioModel? get usuario => _session?.usuario;
   String? get accessToken => _session?.accessToken;
+
+  /// Dashboard comercial visível só para admin e gerente.
+  bool get podeVerDashboardComercial =>
+      UserPerfil.podeVerDashboardComercial(usuario?.perfil);
 
   bool get isAuthenticated {
     final current = _session;

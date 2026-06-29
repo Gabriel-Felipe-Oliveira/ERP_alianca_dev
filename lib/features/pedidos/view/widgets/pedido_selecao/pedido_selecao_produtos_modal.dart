@@ -9,6 +9,7 @@ import 'package:erp_alianca_dev/shared/models/base_state.dart';
 import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
 import 'package:erp_alianca_dev/shared/theme/app_spacing.dart';
 import 'package:erp_alianca_dev/shared/theme/app_text_styles.dart';
+import 'package:erp_alianca_dev/shared/widgets/app_tooltip.dart';
 import 'package:erp_alianca_dev/shared/utils/app_formatters.dart';
 import 'package:erp_alianca_dev/shared/widgets/app_primary_button.dart';
 
@@ -201,7 +202,7 @@ class _PedidoSelecaoProdutosModalState extends State<PedidoSelecaoProdutosModal>
                             : IconButton(
                                 icon: const Icon(Icons.clear),
                                 onPressed: _limparPesquisa,
-                                tooltip: 'Limpar pesquisa',
+                                tooltip: windowsSafeTooltip('Limpar pesquisa'),
                               ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),

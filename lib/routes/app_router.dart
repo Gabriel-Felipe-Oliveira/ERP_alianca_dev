@@ -32,6 +32,7 @@ import 'package:erp_alianca_dev/shared/services/produto_service.dart';
 import 'package:erp_alianca_dev/features/romaneio/view/romaneio_create_view.dart';
 import 'package:erp_alianca_dev/features/romaneio/view/romaneio_detalhes_view.dart';
 import 'package:erp_alianca_dev/features/romaneio/view/romaneio_view.dart';
+import 'package:erp_alianca_dev/features/dashboard_comercial/view/dashboard_comercial_view.dart';
 import 'package:erp_alianca_dev/features/romaneio/viewmodel/romaneio_criar_viewmodel.dart';
 import 'package:erp_alianca_dev/features/romaneio/viewmodel/romaneio_detalhe_viewmodel.dart';
 import 'package:erp_alianca_dev/routes/app_routes.dart';
@@ -39,6 +40,7 @@ import 'package:erp_alianca_dev/shared/services/romaneio_service.dart';
 import 'package:erp_alianca_dev/features/login/view/login_view.dart';
 import 'package:erp_alianca_dev/features/login/viewmodel/login_viewmodel.dart';
 import 'package:erp_alianca_dev/shared/services/auth_service.dart';
+import 'package:erp_alianca_dev/shared/viewmodels/app_router_refresh_notifier.dart';
 import 'package:erp_alianca_dev/shared/viewmodels/navigation_controller.dart';
 
 /// Chave de navegação global para acessar o contexto do router.
@@ -78,15 +80,23 @@ void initAppRouter(AuthService authService) {
   initialLocation: AppRoutes.login,
   debugLogDiagnostics: true,
   observers: [routeObserver],
-  refreshListenable: authService,
+  refreshListenable: Listenable.merge([
+    authService,
+    AppRouterRefreshNotifier.instance,
+  ]),
   redirect: (context, state) {
     final loggedIn = authService.isAuthenticated;
     final onLogin = state.matchedLocation == AppRoutes.login;
+    final onDashboard =
+        state.matchedLocation == AppRoutes.dashboardComercial;
 
     if (!loggedIn) {
       return onLogin ? null : AppRoutes.login;
     }
     if (onLogin) {
+      return AppRoutes.home;
+    }
+    if (onDashboard && !authService.podeVerDashboardComercial) {
       return AppRoutes.home;
     }
     return null;
@@ -324,6 +334,13 @@ void initAppRouter(AuthService authService) {
               },
             ),
           ],
+        ),
+
+        // Dashboard comercial
+        GoRoute(
+          path: AppRoutes.dashboardComercial,
+          name: 'dashboard-comercial',
+          builder: (context, state) => const DashboardComercialView(),
         ),
       ],
     ),

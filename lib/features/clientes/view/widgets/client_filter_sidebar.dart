@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
+import 'package:erp_alianca_dev/shared/widgets/app_tooltip.dart';
 
 /// Item de filtro exibido na barra lateral de clientes.
 class ClientFilterSidebarItem {
@@ -76,7 +77,7 @@ class _FilterIconButtonState extends State<_FilterIconButton> {
       return content;
     }
 
-    return Tooltip(
+    return AppTooltip(
       message: tooltip,
       child: content,
     );
@@ -94,7 +95,7 @@ class _FilterIconButtonState extends State<_FilterIconButton> {
   }
 
   Widget _buildContent() {
-    return Tooltip(
+    return AppTooltip(
       message: widget.item.tooltip ?? widget.item.label,
       child: MouseRegion(
         onEnter: (_) => setState(() => _hovered = true),

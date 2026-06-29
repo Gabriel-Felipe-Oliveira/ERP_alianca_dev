@@ -3,6 +3,7 @@ import 'package:erp_alianca_dev/features/clientes/model/cliente_model.dart';
 import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
 import 'package:erp_alianca_dev/shared/theme/app_radius.dart';
 import 'package:erp_alianca_dev/shared/theme/app_spacing.dart';
+import 'package:erp_alianca_dev/shared/widgets/app_tooltip.dart';
 import 'package:erp_alianca_dev/shared/theme/app_text_styles.dart';
 
 /// Item compacto da lista de clientes: layout horizontal alinhado (estilo ERP/SaaS).
@@ -155,7 +156,7 @@ class _ClientTileState extends State<ClientTile> {
                       widget.cliente.id != null &&
                       _clienteEhAtivo(widget.cliente)) ...[
                     const SizedBox(width: AppSpacing.sm),
-                    Tooltip(
+                    AppTooltip(
                       message: 'Novo pedido',
                       child: Material(
                         color: AppColors.primary.withOpacity(0.18),

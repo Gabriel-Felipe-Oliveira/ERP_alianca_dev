@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:erp_alianca_dev/features/clientes/model/cliente_model.dart';
 import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
 import 'package:erp_alianca_dev/shared/theme/app_text_styles.dart';
+import 'package:erp_alianca_dev/shared/widgets/app_tooltip.dart';
 import 'package:erp_alianca_dev/shared/widgets/listagem_list_card.dart';
 
 /// Largura fixa da coluna Id para alinhar com o cabeçalho da listagem.
@@ -98,7 +99,7 @@ class ClienteListItem extends StatelessWidget {
               ],
               if (onNovoPedido != null && cliente.id != null) ...[
                 SizedBox(width: compact ? 4 : 6),
-                Tooltip(
+                AppTooltip(
                   message: 'Novo pedido para este cliente',
                   child: Material(
                     color: AppColors.primary,

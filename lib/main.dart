@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 import 'package:erp_alianca_dev/core/constants/app_constants.dart';
 import 'package:erp_alianca_dev/core/network/dio_client.dart';
+import 'package:erp_alianca_dev/core/platform/erp_widgets_binding.dart';
+import 'package:erp_alianca_dev/core/platform/windows_keyboard_fix.dart';
+import 'package:erp_alianca_dev/core/platform/windows_semantics_guard.dart';
 import 'package:erp_alianca_dev/core/theme/empresa_palettes.dart';
 import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
 import 'package:erp_alianca_dev/shared/models/empresa_palette_model.dart';
 import 'package:erp_alianca_dev/features/clientes/viewmodel/clientes_viewmodel.dart';
-import 'package:erp_alianca_dev/features/home/viewmodel/home_viewmodel.dart';
 import 'package:erp_alianca_dev/features/pedidos/viewmodel/pedidos_viewmodel.dart';
 import 'package:erp_alianca_dev/shared/services/produto_service.dart';
 import 'package:erp_alianca_dev/features/produtos/viewmodel/produtos_viewmodel.dart';
 import 'package:erp_alianca_dev/features/romaneio/viewmodel/romaneio_viewmodel.dart';
+import 'package:erp_alianca_dev/features/dashboard_comercial/viewmodel/dashboard_comercial_viewmodel.dart';
 import 'package:erp_alianca_dev/routes/app_routes.dart';
 import 'package:erp_alianca_dev/routes/app_router.dart';
 import 'package:erp_alianca_dev/shared/services/auth_storage_service.dart';
@@ -30,10 +35,12 @@ import 'package:erp_alianca_dev/shared/utils/pdf_utils.dart';
 import 'package:erp_alianca_dev/shared/viewmodels/navigation_controller.dart';
 import 'package:erp_alianca_dev/shared/viewmodels/notifications_viewmodel.dart';
 import 'package:erp_alianca_dev/shared/viewmodels/theme_palette_provider.dart';
+import 'package:erp_alianca_dev/shared/widgets/app_palette_scope.dart';
 import 'package:window_manager/window_manager.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  ErpWidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('pt_BR');
   await Future<void>.delayed(Duration.zero);
 
   await windowManager.ensureInitialized();
@@ -44,7 +51,11 @@ void main() async {
   );
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
     await windowManager.show();
+  });
+  await WindowsKeyboardFix.install();
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
     await windowManager.focus();
+    WindowsKeyboardFix.syncNow();
   });
 
   final localStorageService = LocalStorageService();
@@ -83,20 +94,22 @@ void main() async {
   );
 
   runApp(
-    VendasBaseApp(
-      localStorageService: localStorageService,
-      authService: authService,
-      empresaService: empresaService,
-      dioClient: dioClient,
-      clienteService: clienteService,
-      pedidoService: pedidoService,
-      produtoService: produtoService,
-      romaneioService: romaneioService,
-      dashboardService: dashboardService,
-      cupomService: cupomService,
-      pdfExportService: pdfExportService,
-      cnpjConsultaService: cnpjConsultaService,
-      realtimeService: realtimeService,
+    WindowsSemanticsGuard(
+      child: VendasBaseApp(
+        localStorageService: localStorageService,
+        authService: authService,
+        empresaService: empresaService,
+        dioClient: dioClient,
+        clienteService: clienteService,
+        pedidoService: pedidoService,
+        produtoService: produtoService,
+        romaneioService: romaneioService,
+        dashboardService: dashboardService,
+        cupomService: cupomService,
+        pdfExportService: pdfExportService,
+        cnpjConsultaService: cnpjConsultaService,
+        realtimeService: realtimeService,
+      ),
     ),
   );
 }
@@ -186,9 +199,6 @@ class _VendasBaseAppState extends State<VendasBaseApp> {
             ChangeNotifierProvider<NavigationController>(
               create: (_) => NavigationController(),
             ),
-            ChangeNotifierProvider<HomeViewModel>(
-              create: (ctx) => HomeViewModel(ctx.read<DashboardService>()),
-            ),
             ChangeNotifierProvider<ClientesViewModel>(
               create: (context) =>
                   ClientesViewModel(context.read<ClienteService>()),
@@ -204,6 +214,10 @@ class _VendasBaseAppState extends State<VendasBaseApp> {
             ),
             ChangeNotifierProvider<RomaneioViewModel>(
               create: (ctx) => RomaneioViewModel(ctx.read<RomaneioService>()),
+            ),
+            ChangeNotifierProvider<DashboardComercialViewModel>(
+              create: (ctx) =>
+                  DashboardComercialViewModel(ctx.read<DashboardService>()),
             ),
             ChangeNotifierProvider<ThemePaletteProvider>(
               create: (ctx) => ThemePaletteProvider(
@@ -226,13 +240,27 @@ class _VendasBaseAppState extends State<VendasBaseApp> {
               });
               final themePalette = context.watch<ThemePaletteProvider>();
               return MaterialApp.router(
-                key: ValueKey<bool>(themePalette.isLightMode),
                 title: AppConstants.appName,
                 debugShowCheckedModeBanner: false,
+                locale: const Locale('pt', 'BR'),
+                localizationsDelegates: const [
+                  GlobalMaterialLocalizations.delegate,
+                  GlobalWidgetsLocalizations.delegate,
+                  GlobalCupertinoLocalizations.delegate,
+                ],
+                supportedLocales: const [
+                  Locale('pt', 'BR'),
+                ],
                 theme: themePalette.lightThemeData,
                 darkTheme: themePalette.darkThemeData,
                 themeMode: themePalette.themeMode,
                 routerConfig: appRouter,
+                builder: (context, child) {
+                  return AppPaletteScope(
+                    isLightMode: themePalette.isLightMode,
+                    child: child ?? const SizedBox.shrink(),
+                  );
+                },
               );
             },
           ),

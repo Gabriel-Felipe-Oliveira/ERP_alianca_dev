@@ -22,6 +22,24 @@ abstract class BaseViewModel extends ChangeNotifier {
     );
   }
 
+  /// 404 em leituras (GET/listagem): tratar como vazio, sem banner na UI.
+  static bool isSilentNotFound(Object error) =>
+      error is AppException && error.statusCode == 404;
+
+  /// Mensagem para banner de erro em telas de leitura. Retorna null se for 404 silencioso.
+  static String? readErrorForUi(
+    Object error, {
+    required String tag,
+    String fallback = 'Erro ao carregar dados.',
+  }) {
+    if (isSilentNotFound(error)) {
+      logFailure(error, tag: tag);
+      return null;
+    }
+    if (error is AppException) return error.message;
+    return userMessage(error, fallback);
+  }
+
   @override
   void notifyListeners() {
     if (!_disposed) {

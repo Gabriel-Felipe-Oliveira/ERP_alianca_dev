@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:erp_alianca_dev/core/platform/windows_keyboard_fix.dart';
 import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
 import 'package:erp_alianca_dev/shared/theme/app_input_type.dart';
 import 'package:erp_alianca_dev/shared/theme/app_radius.dart';
@@ -23,6 +26,9 @@ class AppTextField extends StatefulWidget {
     this.maxLines = 1,
     this.maxLength,
     this.onChanged,
+    this.textInputAction,
+    this.onFieldSubmitted,
+    this.focusNode,
   });
 
   final String label;
@@ -37,13 +43,63 @@ class AppTextField extends StatefulWidget {
   final int? maxLines;
   final int? maxLength;
   final void Function(String)? onChanged;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onFieldSubmitted;
+  final FocusNode? focusNode;
 
   @override
   State<AppTextField> createState() => _AppTextFieldState();
 }
 
 class _AppTextFieldState extends State<AppTextField> {
+  FocusNode? _focusNode;
+  bool _ownsFocusNode = true;
   bool _focused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _bindFocusNode(widget.focusNode);
+  }
+
+  @override
+  void didUpdateWidget(covariant AppTextField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.focusNode != widget.focusNode) {
+      _unbindFocusNode();
+      _bindFocusNode(widget.focusNode);
+    }
+  }
+
+  @override
+  void dispose() {
+    _unbindFocusNode();
+    super.dispose();
+  }
+
+  void _bindFocusNode(FocusNode? external) {
+    _ownsFocusNode = external == null;
+    _focusNode = external ?? FocusNode();
+    _focusNode!.addListener(_onFocusChange);
+  }
+
+  void _unbindFocusNode() {
+    _focusNode?.removeListener(_onFocusChange);
+    if (_ownsFocusNode) {
+      _focusNode?.dispose();
+    }
+    _focusNode = null;
+  }
+
+  void _onFocusChange() {
+    final hasFocus = _focusNode?.hasFocus ?? false;
+    if (hasFocus && Platform.isWindows) {
+      WindowsKeyboardFix.syncNow();
+    }
+    if (_focused != hasFocus && mounted) {
+      setState(() => _focused = hasFocus);
+    }
+  }
 
   OutlineInputBorder _border({Color? color, double width = 1}) {
     return OutlineInputBorder(
@@ -167,8 +223,11 @@ class _AppTextFieldState extends State<AppTextField> {
   Widget build(BuildContext context) {
     final field = TextFormField(
       controller: widget.controller,
+      focusNode: _focusNode,
       validator: _resolveValidator(),
       keyboardType: _resolveKeyboardType(),
+      textInputAction: widget.textInputAction,
+      onFieldSubmitted: widget.onFieldSubmitted,
       enabled: widget.enabled,
       obscureText: widget.obscureText,
       minLines: widget.minLines,
@@ -201,26 +260,21 @@ class _AppTextFieldState extends State<AppTextField> {
       ),
     );
 
-    return Focus(
-      onFocusChange: (hasFocus) {
-        if (_focused != hasFocus) setState(() => _focused = hasFocus);
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        decoration: _focused && AppColors.isLightTheme
-            ? BoxDecoration(
-                borderRadius: BorderRadius.circular(AppRadius.input),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.15),
-                    blurRadius: 0,
-                    spreadRadius: 3,
-                  ),
-                ],
-              )
-            : null,
-        child: field,
-      ),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      decoration: _focused && AppColors.isLightTheme
+          ? BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.input),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.15),
+                  blurRadius: 0,
+                  spreadRadius: 3,
+                ),
+              ],
+            )
+          : null,
+      child: field,
     );
   }
 }

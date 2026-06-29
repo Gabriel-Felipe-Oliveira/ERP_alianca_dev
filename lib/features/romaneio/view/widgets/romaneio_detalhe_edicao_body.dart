@@ -8,6 +8,7 @@ import 'package:erp_alianca_dev/routes/app_routes.dart';
 import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
 import 'package:erp_alianca_dev/shared/theme/app_radius.dart';
 import 'package:erp_alianca_dev/shared/theme/app_spacing.dart';
+import 'package:erp_alianca_dev/shared/widgets/app_tooltip.dart';
 import 'package:erp_alianca_dev/shared/theme/app_text_styles.dart';
 import 'package:erp_alianca_dev/shared/utils/app_formatters.dart';
 import 'package:erp_alianca_dev/shared/widgets/app_text_field.dart';
@@ -198,7 +199,7 @@ class _RomaneioPedidoEdicaoRow extends StatelessWidget {
             icon: const Icon(Icons.remove_circle_outline),
             color: AppColors.error,
             onPressed: () => vm.removerPedidoDoRomaneio(pedido),
-            tooltip: 'Remover do romaneio',
+            tooltip: windowsSafeTooltip('Remover do romaneio'),
           ),
         ],
       ),

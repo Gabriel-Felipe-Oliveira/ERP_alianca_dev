@@ -7,7 +7,7 @@ import 'package:erp_alianca_dev/core/utils/app_logger.dart';
 import 'package:erp_alianca_dev/shared/models/realtime_notification_model.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-/// Cliente WebSocket Phoenix (erp_realtime). Sem UI — expõe stream de eventos.
+/// Cliente WebSocket Phoenix (erp_realtime). Falhas são silenciosas — sem UI.
 class RealtimeService {
   RealtimeService();
 
@@ -29,6 +29,7 @@ class RealtimeService {
   bool get isConnected => _channel != null;
 
   Future<void> connect({required int idEmpresa}) async {
+    if (!AppConstants.realtimeEnabled) return;
     if (_connectedEmpresaId == idEmpresa && _channel != null) return;
 
     await disconnect();
@@ -38,22 +39,31 @@ class RealtimeService {
     );
 
     try {
-      _channel = WebSocketChannel.connect(uri);
+      final channel = WebSocketChannel.connect(uri);
+      await channel.ready.timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => throw TimeoutException('WebSocket timeout'),
+      );
+
+      _channel = channel;
       _connectedEmpresaId = idEmpresa;
       _subscription = _channel!.stream.listen(
         _onMessage,
         onError: _onError,
         onDone: _onDone,
-        cancelOnError: true,
+        cancelOnError: false,
       );
       _joinEmpresaChannel(idEmpresa);
       _startHeartbeat();
     } catch (e, st) {
-      AppLogger.error(
-        '[$_tag] Falha ao conectar WebSocket',
-        error: e,
-        stackTrace: st,
+      AppLogger.debug(
+        '[$_tag] Mensageria indisponível (conexão ignorada)',
+        tag: _tag,
       );
+      AppLogger.debug(e.toString(), tag: _tag);
+      if (st != StackTrace.empty) {
+        AppLogger.debug(st.toString(), tag: _tag);
+      }
       await disconnect();
     }
   }
@@ -63,7 +73,9 @@ class RealtimeService {
     _heartbeatTimer = null;
     await _subscription?.cancel();
     _subscription = null;
-    await _channel?.sink.close();
+    try {
+      await _channel?.sink.close();
+    } catch (_) {}
     _channel = null;
     _connectedEmpresaId = null;
     _joinRef = null;
@@ -103,8 +115,12 @@ class RealtimeService {
     final channel = _channel;
     if (channel == null) return;
 
-    final message = jsonEncode([joinRef, ref, topic, event, payload]);
-    channel.sink.add(message);
+    try {
+      final message = jsonEncode([joinRef, ref, topic, event, payload]);
+      channel.sink.add(message);
+    } catch (e) {
+      AppLogger.debug('[$_tag] Falha ao enviar frame: $e', tag: _tag);
+    }
   }
 
   void _onMessage(Object? raw) {
@@ -128,14 +144,10 @@ class RealtimeService {
       }
 
       if (event == 'phx_close' && topic.startsWith('empresa:')) {
-        AppLogger.info('Canal fechado: $topic', tag: _tag);
+        AppLogger.debug('Canal fechado: $topic', tag: _tag);
       }
-    } catch (e, st) {
-      AppLogger.error(
-        '[$_tag] Erro ao parsear mensagem WebSocket',
-        error: e,
-        stackTrace: st,
-      );
+    } catch (e) {
+      AppLogger.debug('[$_tag] Frame inválido: $e', tag: _tag);
     }
   }
 
@@ -145,16 +157,12 @@ class RealtimeService {
   }
 
   void _onError(Object error, [StackTrace? stackTrace]) {
-    AppLogger.error(
-      '[$_tag] WebSocket erro',
-      error: error,
-      stackTrace: stackTrace,
-    );
-    disconnect();
+    AppLogger.debug('[$_tag] Mensageria indisponível: $error', tag: _tag);
+    unawaited(disconnect());
   }
 
   void _onDone() {
-    AppLogger.info('WebSocket encerrado', tag: _tag);
+    AppLogger.debug('WebSocket encerrado', tag: _tag);
     _channel = null;
     _connectedEmpresaId = null;
   }

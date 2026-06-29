@@ -3,6 +3,7 @@ import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
 import 'package:erp_alianca_dev/shared/theme/app_spacing.dart';
 import 'package:erp_alianca_dev/shared/theme/app_text_styles.dart';
 import 'package:erp_alianca_dev/shared/widgets/app_tool_panel.dart';
+import 'package:erp_alianca_dev/shared/widgets/app_tooltip.dart';
 
 /// Item interativo do painel de ferramentas: ícone, opcional barra lateral e label.
 /// Usado dentro de [AppToolPanel]. Hover, animação e tooltip com [label].
@@ -151,7 +152,7 @@ class _AppToolItemState extends State<AppToolItem> {
         ),
         child: SizedBox(
           width: double.infinity,
-          child: Tooltip(
+          child: AppTooltip(
             message: widget.label,
             child: widget.showLabel
                 ? _buildExpandedContent(color)

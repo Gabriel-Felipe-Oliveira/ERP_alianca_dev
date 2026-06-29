@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:erp_alianca_dev/shared/models/realtime_notification_model.dart';
+import 'package:erp_alianca_dev/core/constants/app_constants.dart';
 import 'package:erp_alianca_dev/shared/services/auth_service.dart';
 import 'package:erp_alianca_dev/shared/services/empresa_service.dart';
 import 'package:erp_alianca_dev/shared/services/realtime_service.dart';
@@ -48,7 +49,12 @@ class NotificationsViewModel extends BaseViewModel {
   }
 
   Future<void> _connect(int idEmpresa) async {
-    await _realtimeService.connect(idEmpresa: idEmpresa);
+    if (!AppConstants.realtimeEnabled) return;
+    try {
+      await _realtimeService.connect(idEmpresa: idEmpresa);
+    } catch (_) {
+      // Mensageria opcional — nunca expor erro na UI.
+    }
     if (isDisposed) return;
   }
 

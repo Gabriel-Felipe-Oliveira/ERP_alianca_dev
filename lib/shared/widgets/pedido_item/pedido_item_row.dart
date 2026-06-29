@@ -6,6 +6,7 @@ import 'package:erp_alianca_dev/shared/widgets/pedido_item/pedido_item_inline_qt
 import 'package:erp_alianca_dev/shared/widgets/pedido_item/pedido_item_inline_text.dart';
 import 'package:erp_alianca_dev/shared/widgets/pedido_item/pedido_item_inline_valor_field.dart';
 import 'package:erp_alianca_dev/shared/widgets/pedido_item/pedido_item_row_actions.dart';
+import 'package:erp_alianca_dev/shared/widgets/app_tooltip.dart';
 
 /// Uma linha de item do pedido em formato compacto:
 /// Linha 1: Nome: ____ , valor: ___ (editável se [valorEditavel] e [onValorChanged] forem fornecidos)
@@ -286,7 +287,7 @@ class _PedidoItemRowState extends State<PedidoItemRow> {
                   padding: EdgeInsets.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                tooltip: 'Remover item',
+                tooltip: windowsSafeTooltip('Remover item'),
               ),
               const SizedBox(width: 4),
               Expanded(child: content),

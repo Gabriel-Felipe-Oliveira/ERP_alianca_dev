@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
+import 'package:erp_alianca_dev/shared/widgets/app_tooltip.dart';
 import 'package:erp_alianca_dev/features/dashboard/view/widgets/sidebar/sidebar_constants.dart';
 import 'package:erp_alianca_dev/features/dashboard/view/widgets/sidebar/sidebar_interactive.dart';
 import 'package:erp_alianca_dev/features/dashboard/view/widgets/sidebar/sidebar_item_colors.dart';
@@ -183,7 +184,7 @@ class _SidebarCollapsedIconTileState extends State<SidebarCollapsedIconTile> {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: SidebarConstants.menuItemMarginBottom),
-      child: Tooltip(
+      child: AppTooltip(
         message: widget.label,
         child: MouseRegion(
           onEnter: (_) {

@@ -9,6 +9,7 @@ import 'package:erp_alianca_dev/features/dashboard/view/widgets/sidebar_menu_ite
 import 'package:erp_alianca_dev/features/dashboard/view/widgets/sidebar/sidebar_constants.dart';
 import 'package:erp_alianca_dev/features/dashboard/view/widgets/sidebar/sidebar_interactive.dart';
 import 'package:erp_alianca_dev/shared/widgets/app_logo.dart';
+import 'package:erp_alianca_dev/shared/widgets/app_tooltip.dart';
 import 'package:erp_alianca_dev/shared/widgets/app_theme_mode_toggle.dart';
 import 'package:erp_alianca_dev/shared/viewmodels/theme_palette_provider.dart';
 import 'package:erp_alianca_dev/shared/services/auth_service.dart';
@@ -50,7 +51,9 @@ class _SidebarWidgetState extends State<SidebarWidget> {
   @override
   Widget build(BuildContext context) {
     context.watch<ThemePaletteProvider>();
-    final String currentLocation = _currentPath(context);    final targetWidth = widget.isCollapsed
+    final auth = context.watch<AuthService>();
+    final String currentLocation = _currentPath(context);
+    final targetWidth = widget.isCollapsed
         ? SidebarConstants.sidebarCollapsedWidth
         : SidebarConstants.sidebarExpandedWidth;
 
@@ -223,6 +226,17 @@ class _SidebarWidgetState extends State<SidebarWidget> {
                     ),
                   ],
                 ),
+
+                if (auth.podeVerDashboardComercial)
+                  SidebarMenuItem(
+                    icon: Icons.insights_outlined,
+                    title: 'Dashboard',
+                    route: AppRoutes.dashboardComercial,
+                    isSelected:
+                        currentLocation == AppRoutes.dashboardComercial,
+                    isCollapsed: compactLayout,
+                    onTap: () => context.go(AppRoutes.dashboardComercial),
+                  ),
               ],
             ),
           ),
@@ -354,7 +368,7 @@ class _SidebarWidgetState extends State<SidebarWidget> {
         children: [
           const SidebarSubtleDivider(),
           if (usuario != null) ...[
-            Tooltip(
+            AppTooltip(
               message: '${usuario.nome}\n${usuario.email}',
               child: _buildUserAvatar(usuario.nome, radius: 16),
             ),
@@ -529,7 +543,7 @@ class _SidebarToggleButtonState extends State<_SidebarToggleButton> {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
+    return AppTooltip(
       message: widget.isCollapsed ? 'Expandir menu' : 'Recolher menu',
       child: MouseRegion(
         onEnter: (_) => setState(() => _isHovered = true),

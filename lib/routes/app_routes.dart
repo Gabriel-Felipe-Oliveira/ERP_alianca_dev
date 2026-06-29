@@ -36,4 +36,7 @@ abstract class AppRoutes {
 
   /// Path com id: /romaneio/detalhes/123
   static String romaneioDetalhesId(int id) => '/romaneio/detalhes/$id';
+
+  // Dashboard comercial
+  static const String dashboardComercial = '/dashboard';
 }

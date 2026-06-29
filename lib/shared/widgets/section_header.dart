@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
 import 'package:erp_alianca_dev/shared/theme/app_spacing.dart';
 import 'package:erp_alianca_dev/shared/theme/app_text_styles.dart';
+import 'package:erp_alianca_dev/shared/widgets/app_tooltip.dart';
 
 /// Cabeçalho de página: título com barra lateral ou modo compacto (ícone + título).
 /// Se [onBack] for informado, exibe botão de voltar à esquerda (telas de criar/detalhe).
@@ -54,7 +55,7 @@ class SectionHeader extends StatelessWidget {
             style: IconButton.styleFrom(
               foregroundColor: AppColors.textPrimary,
             ),
-            tooltip: 'Voltar',
+            tooltip: windowsSafeTooltip('Voltar'),
           ),
           const SizedBox(width: AppSpacing.xs),
         ],
@@ -116,7 +117,7 @@ class SectionHeader extends StatelessWidget {
                   style: IconButton.styleFrom(
                     foregroundColor: Theme.of(context).colorScheme.onSurface,
                   ),
-                  tooltip: 'Voltar',
+                  tooltip: windowsSafeTooltip('Voltar'),
                 ),
                 const SizedBox(width: 4),
               ],

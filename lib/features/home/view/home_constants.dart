@@ -1,14 +1,16 @@
-/// Constantes de layout e grid da Home (Dashboard).
+import 'package:erp_alianca_dev/features/home/view/widgets/home_nav_card_constants.dart';
+
+/// Constantes de layout da Home.
 class HomeConstants {
   HomeConstants._();
 
-  static const double maxContentWidth = 900;
+  static const int menuColumnCount = 2;
   static const double padding = 32;
-  static const double gridSpacing = 36;
-  static const double minCardWidth = 150;
-  static const int maxColumns = 3;
-  static const double childAspectRatio = 1.5;
 
-  static const String pageTitle = 'Dashboard Geral';
-  static const String pageDescription = 'Indicadores principais do sistema.';
+  /// Largura total da grade (2 colunas fixas + espaço entre elas).
+  static double get menuGridWidth =>
+      HomeNavCardConstants.sectionWidth * menuColumnCount +
+      HomeNavCardConstants.columnGap * (menuColumnCount - 1);
+
+  static const double maxContentWidth = double.infinity;
 }

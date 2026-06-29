@@ -7,6 +7,7 @@ import 'package:erp_alianca_dev/shared/models/base_state.dart';
 import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
 import 'package:erp_alianca_dev/shared/theme/app_spacing.dart';
 import 'package:erp_alianca_dev/shared/theme/app_text_styles.dart';
+import 'package:erp_alianca_dev/shared/widgets/app_tooltip.dart';
 
 /// Mini tela (modal) para escolher um cliente na criação de pedido.
 /// Ao tocar em um cliente, ele é selecionado e o modal fecha.
@@ -153,7 +154,7 @@ class _PedidoSelecaoClienteModalState extends State<PedidoSelecaoClienteModal> {
                             vm.carregarListaClientes();
                             setState(() {});
                           },
-                          tooltip: 'Limpar pesquisa',
+                          tooltip: windowsSafeTooltip('Limpar pesquisa'),
                         ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
