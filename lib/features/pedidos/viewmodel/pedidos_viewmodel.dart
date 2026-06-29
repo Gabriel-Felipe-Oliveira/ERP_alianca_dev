@@ -1,7 +1,9 @@
 import 'package:erp_alianca_dev/core/errors/app_exception.dart';
 import 'package:erp_alianca_dev/features/pedidos/model/pedido_model.dart';
 import 'package:erp_alianca_dev/shared/models/base_state.dart';
+import 'package:erp_alianca_dev/shared/models/dashboard_totais_model.dart';
 import 'package:erp_alianca_dev/shared/services/cliente_service.dart';
+import 'package:erp_alianca_dev/shared/services/dashboard_service.dart';
 import 'package:erp_alianca_dev/shared/services/pedido_service.dart';
 import 'package:erp_alianca_dev/shared/utils/list_pagination_helper.dart';
 import 'package:erp_alianca_dev/shared/viewmodels/base_view_model.dart';
@@ -15,10 +17,15 @@ const List<({String value, String label})> kPedidoStatusFiltros = [
 ];
 
 class PedidosViewModel extends BaseViewModel {
-  PedidosViewModel(this._pedidoService, this._clienteService);
+  PedidosViewModel(
+    this._pedidoService,
+    this._clienteService,
+    this._dashboardService,
+  );
 
   final PedidoService _pedidoService;
   final ClienteService _clienteService;
+  final DashboardService _dashboardService;
   final ListPaginationHelper _pagination = ListPaginationHelper();
 
   ViewState _state = ViewState.idle;
@@ -26,6 +33,7 @@ class PedidosViewModel extends BaseViewModel {
   final List<PedidoListagemModel> _pedidos = [];
   final Map<int, String> _nomesClientes = {};
   String _statusFiltro = '';
+  double _totalGeralListagem = 0;
 
   ViewState get state => _state;
   String get errorMessage => _errorMessage;
@@ -35,8 +43,7 @@ class PedidosViewModel extends BaseViewModel {
   bool get hasMorePedidos => _pagination.hasMore;
   bool get isLoadingMorePedidos => _pagination.isLoadingMore;
 
-  double get totalGeralListagem =>
-      _pedidos.fold<double>(0, (s, p) => s + p.total);
+  double get totalGeralListagem => _totalGeralListagem;
 
   void setStatusFiltro(String value) {
     if (_statusFiltro == value) return;
@@ -73,6 +80,20 @@ class PedidosViewModel extends BaseViewModel {
   String get _statusParaApi =>
       _statusFiltro.isEmpty ? 'confirmado' : _statusFiltro;
 
+  Future<void> _carregarTotais() async {
+    try {
+      final totais = await _dashboardService.buscarTotais(
+        DashboardTotaisFiltros(status: _statusParaApi),
+      );
+      if (isDisposed) return;
+      _totalGeralListagem = totais.pedidos.resumo.valorTotal;
+    } catch (e) {
+      BaseViewModel.logFailure(e, tag: 'PedidosViewModel.totais');
+      if (isDisposed) return;
+      _totalGeralListagem = 0;
+    }
+  }
+
   Future<void> loadPedidos() async {
     if (isDisposed) return;
     _pagination.reset();
@@ -80,6 +101,7 @@ class PedidosViewModel extends BaseViewModel {
     _errorMessage = '';
     _pedidos.clear();
     _nomesClientes.clear();
+    _totalGeralListagem = 0;
     notifyListeners();
 
     try {
@@ -94,7 +116,10 @@ class PedidosViewModel extends BaseViewModel {
           .map((p) => p.idCliente)
           .where((id) => id > 0)
           .toSet();
-      await _resolverNomesClientes(idsCliente);
+      await Future.wait([
+        _resolverNomesClientes(idsCliente),
+        _carregarTotais(),
+      ]);
 
       _state = ViewState.success;
     } catch (e) {

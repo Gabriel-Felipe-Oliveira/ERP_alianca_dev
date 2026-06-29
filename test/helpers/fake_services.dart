@@ -4,8 +4,10 @@ import 'package:erp_alianca_dev/features/clientes/model/cliente_model.dart';
 import 'package:erp_alianca_dev/features/pedidos/model/pedido_model.dart';
 import 'package:erp_alianca_dev/features/produtos/model/produto_model.dart';
 import 'package:erp_alianca_dev/features/romaneio/model/romaneio_model.dart';
+import 'package:erp_alianca_dev/shared/models/dashboard_totais_model.dart';
 import 'package:erp_alianca_dev/shared/models/paginated_result.dart';
 import 'package:erp_alianca_dev/shared/services/cliente_service.dart';
+import 'package:erp_alianca_dev/shared/services/dashboard_service.dart';
 import 'package:erp_alianca_dev/shared/services/empresa_service.dart';
 import 'package:erp_alianca_dev/shared/services/pedido_service.dart';
 import 'package:erp_alianca_dev/shared/services/produto_service.dart';
@@ -40,6 +42,23 @@ class FakePedidoService extends PedidoService {
           total: 0,
           hasMore: false,
         );
+  }
+}
+
+class FakeDashboardService extends DashboardService {
+  FakeDashboardService() : super(bareTestClient());
+
+  DashboardTotaisModel totaisResultado = DashboardTotaisModel.vazio;
+  DashboardTotaisFiltros? ultimosFiltrosTotais;
+  int buscarTotaisCalls = 0;
+
+  @override
+  Future<DashboardTotaisModel> buscarTotais(
+    DashboardTotaisFiltros filtros,
+  ) async {
+    buscarTotaisCalls++;
+    ultimosFiltrosTotais = filtros;
+    return totaisResultado;
   }
 }
 

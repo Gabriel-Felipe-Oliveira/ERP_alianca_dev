@@ -7,6 +7,7 @@ import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
 import 'package:erp_alianca_dev/shared/theme/app_spacing.dart';
 import 'package:erp_alianca_dev/shared/theme/app_text_styles.dart';
 import 'package:erp_alianca_dev/shared/theme/app_input_type.dart';
+import 'package:erp_alianca_dev/shared/widgets/app_date_field.dart';
 import 'package:erp_alianca_dev/shared/widgets/app_dropdown_field.dart';
 import 'package:erp_alianca_dev/shared/widgets/app_telefone_field.dart';
 import 'package:erp_alianca_dev/shared/widgets/app_text_field.dart';
@@ -24,7 +25,7 @@ abstract class ClienteFormFields {
       const AppSectionTitle(title: 'Dados Gerais'),
       const SizedBox(height: _fieldSpacing),
       AppTextField(
-        label: vm.isCpf ? 'Nome completo' : 'Nome da empresa',
+        label: 'Nome completo',
         controller: vm.nomeController,
         validator: ClienteValidator.nomeCriar(vm.isCpf),
       ),
@@ -85,7 +86,13 @@ abstract class ClienteFormFields {
         type: vm.isCpf ? AppInputType.cpf : AppInputType.cnpj,
         validator: ClienteValidator.documentoCriar(vm.isCpf),
       ),
-      if (vm.deveExibirCampoNomeEmpresa) ...[
+      const SizedBox(height: _fieldSpacing),
+      AppDateField(
+        label: 'Data de nascimento (opcional)',
+        value: vm.dataNascimento,
+        onChanged: (date) => vm.dataNascimento = date,
+      ),
+      if (vm.isCpf && vm.deveExibirCampoNomeEmpresa) ...[
         const SizedBox(height: _fieldSpacing),
         AppTextField(
           label: 'Nome da empresa (opcional)',
@@ -95,7 +102,7 @@ abstract class ClienteFormFields {
       if (!vm.isCpf) ...[
         const SizedBox(height: _fieldSpacing),
         AppTextField(
-          label: 'Nome do responsável (opcional)',
+          label: 'Nome empresa (opcional)',
           controller: vm.nomeResponsavelController,
         ),
       ],

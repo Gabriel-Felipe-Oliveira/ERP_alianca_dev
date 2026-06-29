@@ -235,3 +235,36 @@ class PlacaVeiculoInputFormatter extends TextInputFormatter {
     );
   }
 }
+
+/// Máscara de data: dd/MM/yyyy (8 dígitos).
+class DateInputFormatter extends TextInputFormatter {
+  static const int _maxDigits = 8;
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digitsOnly = newValue.text.replaceAll(RegExp(r'\D'), '');
+    if (digitsOnly.length > _maxDigits) {
+      return oldValue;
+    }
+    if (digitsOnly.isEmpty) {
+      return newValue;
+    }
+    String formatted;
+    if (digitsOnly.length <= 2) {
+      formatted = digitsOnly;
+    } else if (digitsOnly.length <= 4) {
+      formatted =
+          '${digitsOnly.substring(0, 2)}/${digitsOnly.substring(2)}';
+    } else {
+      formatted =
+          '${digitsOnly.substring(0, 2)}/${digitsOnly.substring(2, 4)}/${digitsOnly.substring(4)}';
+    }
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}

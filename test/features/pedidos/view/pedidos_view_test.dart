@@ -37,6 +37,7 @@ void main() {
     final vm = PedidosViewModel(
       FakePedidoService(),
       FakeClienteService(),
+      FakeDashboardService(),
     );
 
     await tester.pumpWidget(_buildApp(vm));
@@ -52,7 +53,11 @@ void main() {
     final pedidoService = FakePedidoService();
     pedidoService.erroAoListar =
         const AppException(message: 'Falha ao carregar pedidos');
-    final vm = PedidosViewModel(pedidoService, FakeClienteService());
+    final vm = PedidosViewModel(
+      pedidoService,
+      FakeClienteService(),
+      FakeDashboardService(),
+    );
     await vm.loadPedidos();
 
     await tester.pumpWidget(_buildApp(vm));
@@ -79,7 +84,11 @@ void main() {
       total: 1,
       hasMore: false,
     );
-    final vm = PedidosViewModel(pedidoService, FakeClienteService());
+    final vm = PedidosViewModel(
+      pedidoService,
+      FakeClienteService(),
+      FakeDashboardService(),
+    );
     await vm.loadPedidos();
 
     await tester.pumpWidget(_buildApp(vm));
@@ -97,7 +106,11 @@ void main() {
       total: 0,
       hasMore: false,
     );
-    final vm = PedidosViewModel(pedidoService, FakeClienteService());
+    final vm = PedidosViewModel(
+      pedidoService,
+      FakeClienteService(),
+      FakeDashboardService(),
+    );
     await vm.loadPedidos();
 
     await tester.pumpWidget(_buildApp(vm));

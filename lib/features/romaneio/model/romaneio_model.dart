@@ -1,9 +1,9 @@
 import 'package:erp_alianca_dev/features/pedidos/model/pedido_model.dart';
 
-/// Status do romaneio (API: rascunho, em_rota, concluido, cancelado).
+/// Status do romaneio (API: em_rota, concluido, cancelado; rascunho legado).
 enum RomaneioStatus {
   rascunho('Rascunho'),
-  emRota('Em Rota'),
+  emRota('Em rota'),
   concluido('Concluído'),
   cancelado('Cancelado');
 

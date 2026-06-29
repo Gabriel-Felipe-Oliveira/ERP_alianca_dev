@@ -1,27 +1,31 @@
 import 'package:erp_alianca_dev/features/romaneio/model/romaneio_model.dart';
 import 'package:erp_alianca_dev/shared/models/base_state.dart';
+import 'package:erp_alianca_dev/shared/models/dashboard_totais_model.dart';
+import 'package:erp_alianca_dev/shared/services/dashboard_service.dart';
 import 'package:erp_alianca_dev/shared/services/romaneio_service.dart';
 import 'package:erp_alianca_dev/shared/utils/list_pagination_helper.dart';
 import 'package:erp_alianca_dev/shared/viewmodels/base_view_model.dart';
 
-/// Filtro de status: Em aberto (todos exceto concluído/cancelado), Concluído, Cancelado.
+/// Filtro de status. Padrão [em_rota]: mesmo status do romaneio ao cadastrar.
 const List<({String value, String label})> kRomaneioStatusFiltros = [
-  (value: '', label: 'Em aberto'),
+  (value: 'em_rota', label: 'Em rota'),
   (value: 'concluido', label: 'Concluído'),
   (value: 'cancelado', label: 'Cancelado'),
 ];
 
 class RomaneioViewModel extends BaseViewModel {
-  RomaneioViewModel(this._romaneioService);
+  RomaneioViewModel(this._romaneioService, this._dashboardService);
 
   final RomaneioService _romaneioService;
+  final DashboardService _dashboardService;
   final ListPaginationHelper _pagination = ListPaginationHelper();
 
   ViewState _state = ViewState.idle;
   String _errorMessage = '';
   final List<RomaneioModel> _romaneios = [];
-  String _statusFiltro = '';
+  String _statusFiltro = 'em_rota';
   bool _includeDeleted = false;
+  double _totalFaturadoListagem = 0;
 
   ViewState get state => _state;
   String get errorMessage => _errorMessage;
@@ -32,8 +36,7 @@ class RomaneioViewModel extends BaseViewModel {
   bool get hasMoreRomaneios => _pagination.hasMore;
   bool get isLoadingMoreRomaneios => _pagination.isLoadingMore;
 
-  double get totalFaturadoListagem =>
-      _romaneios.fold<double>(0, (s, r) => s + r.totalFaturado);
+  double get totalFaturadoListagem => _totalFaturadoListagem;
 
   void setStatusFiltro(String value) {
     if (_statusFiltro == value) return;
@@ -47,13 +50,21 @@ class RomaneioViewModel extends BaseViewModel {
     notifyListeners();
   }
 
-  List<RomaneioModel> _filtrarEmAberto(List<RomaneioModel> lista) {
-    if (_statusFiltro.isNotEmpty) return lista;
-    return lista
-        .where((r) =>
-            r.status != RomaneioStatus.concluido &&
-            r.status != RomaneioStatus.cancelado)
-        .toList();
+  Future<void> _carregarTotais() async {
+    try {
+      final totais = await _dashboardService.buscarTotais(
+        DashboardTotaisFiltros(
+          status: _statusFiltro,
+          includeDeleted: _includeDeleted,
+        ),
+      );
+      if (isDisposed) return;
+      _totalFaturadoListagem = totais.romaneios.resumo.valorTotal;
+    } catch (e) {
+      BaseViewModel.logFailure(e, tag: 'RomaneioViewModel.totais');
+      if (isDisposed) return;
+      _totalFaturadoListagem = 0;
+    }
   }
 
   Future<void> loadRomaneios() async {
@@ -62,29 +73,18 @@ class RomaneioViewModel extends BaseViewModel {
     _state = ViewState.loading;
     _errorMessage = '';
     _romaneios.clear();
+    _totalFaturadoListagem = 0;
     notifyListeners();
 
     try {
       final result = await _romaneioService.listarRomaneiosPaginado(
         page: 1,
-        status: _statusFiltro.isEmpty ? null : _statusFiltro,
+        status: _statusFiltro,
         includeDeleted: _includeDeleted,
       );
       if (isDisposed) return;
-
-      if (_statusFiltro.isEmpty && result.fullCache != null) {
-        final filtrados = _filtrarEmAberto(result.fullCache!);
-        _pagination.setFullCache(filtrados, _romaneios);
-      } else if (_statusFiltro.isEmpty) {
-        final filtrados = _filtrarEmAberto(result.items);
-        _romaneios.addAll(filtrados);
-        _pagination
-          ..total = filtrados.length
-          ..hasMore = result.hasMore
-          ..page = result.page;
-      } else {
-        _pagination.applyFirstPage(result, _romaneios);
-      }
+      _pagination.applyFirstPage(result, _romaneios);
+      await _carregarTotais();
       _state = ViewState.success;
     } catch (e) {
       if (isDisposed) return;
@@ -118,18 +118,11 @@ class RomaneioViewModel extends BaseViewModel {
       }
       final result = await _romaneioService.listarRomaneiosPaginado(
         page: _pagination.page + 1,
-        status: _statusFiltro.isEmpty ? null : _statusFiltro,
+        status: _statusFiltro,
         includeDeleted: _includeDeleted,
       );
       if (isDisposed) return;
-      final novos = _statusFiltro.isEmpty
-          ? _filtrarEmAberto(result.items)
-          : result.items;
-      _romaneios.addAll(novos);
-      _pagination
-        ..page = result.page
-        ..hasMore = result.hasMore
-        ..total = result.total;
+      _pagination.applyNextPage(result, _romaneios);
     } catch (e) {
       BaseViewModel.logFailure(e, tag: 'RomaneioViewModel.loadMore');
     }

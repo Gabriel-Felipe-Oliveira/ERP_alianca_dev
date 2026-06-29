@@ -17,6 +17,7 @@ class ClienteFormValues {
   final String cidade;
   final String estado;
   final String status;
+  final DateTime? dataNascimento;
 
   const ClienteFormValues({
     required this.tipoDocumento,
@@ -33,6 +34,7 @@ class ClienteFormValues {
     required this.cidade,
     required this.estado,
     required this.status,
+    this.dataNascimento,
   });
 
   /// Converte para [ClienteModel] para envio à API.
@@ -62,6 +64,7 @@ class ClienteFormValues {
       cidade: cidade,
       estado: estado,
       status: status,
+      dataNascimento: dataNascimento,
     );
   }
 }

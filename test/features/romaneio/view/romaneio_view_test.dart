@@ -50,12 +50,15 @@ void main() {
   });
 
   testWidgets('RomaneioView exibe filtros de status', (tester) async {
-    final vm = RomaneioViewModel(FakeRomaneioService());
+    final vm = RomaneioViewModel(
+      FakeRomaneioService(),
+      FakeDashboardService(),
+    );
 
     await tester.pumpWidget(_buildApp(vm));
     await tester.pumpAndSettle();
 
-    expect(find.text('Em aberto'), findsOneWidget);
+    expect(find.text('Em rota'), findsOneWidget);
     expect(find.text('Concluído'), findsOneWidget);
     expect(find.text('Cancelado'), findsOneWidget);
   });
@@ -64,7 +67,7 @@ void main() {
     final service = FakeRomaneioService();
     service.erroAoListar =
         const AppException(message: 'Erro ao carregar romaneios');
-    final vm = RomaneioViewModel(service);
+    final vm = RomaneioViewModel(service, FakeDashboardService());
 
     await tester.pumpWidget(_buildApp(vm));
     await tester.pump();
@@ -84,7 +87,7 @@ void main() {
       total: 1,
       hasMore: false,
     );
-    final vm = RomaneioViewModel(service);
+    final vm = RomaneioViewModel(service, FakeDashboardService());
     await vm.loadRomaneios();
 
     await tester.pumpWidget(_buildApp(vm));

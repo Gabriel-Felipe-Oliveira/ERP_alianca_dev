@@ -11,6 +11,7 @@ import 'package:erp_alianca_dev/shared/utils/app_validators.dart';
 
 /// Status usado para filtrar pedidos disponíveis para o romaneio (Pronto para Entrega).
 const String kStatusProntoEntrega = 'confirmado';
+/// Status dos pedidos após vincular ao romaneio (romaneio permanece [em_rota] na API).
 const String kStatusPedidoOrganizado = 'organizado';
 
 /// ViewModel da tela de criação de romaneio.
@@ -311,6 +312,7 @@ class RomaneioCriarViewModel extends BaseViewModel {
         totalFaturado: valorTotal,
         placaVeiculo: placa.isEmpty ? null : placa,
       );
+      // Romaneio criado como em_rota (API). Pedidos saem de confirmado → organizado.
       for (final idPedido in pedidosIds) {
         await _pedidoService.alterarStatusPedido(
           idPedido,

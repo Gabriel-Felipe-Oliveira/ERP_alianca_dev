@@ -3,11 +3,13 @@ import 'package:erp_alianca_dev/core/errors/app_exception.dart';
 import 'package:erp_alianca_dev/core/network/dio_client.dart';
 import 'package:erp_alianca_dev/features/romaneio/model/romaneio_model.dart';
 import 'package:erp_alianca_dev/features/romaneio/viewmodel/romaneio_viewmodel.dart';
+import 'package:erp_alianca_dev/shared/models/dashboard_totais_model.dart';
 import 'package:erp_alianca_dev/shared/models/base_state.dart';
 import 'package:erp_alianca_dev/shared/models/paginated_result.dart';
 import 'package:erp_alianca_dev/shared/services/empresa_service.dart';
 import 'package:erp_alianca_dev/shared/services/romaneio_service.dart';
 
+import '../../../helpers/fake_services.dart';
 import '../../../helpers/mock_dio_client.dart';
 
 DioClient _bareClient() =>
@@ -19,6 +21,7 @@ class FakeRomaneioService extends RomaneioService {
   PaginatedResult<RomaneioModel>? resultado;
   AppException? erroAoListar;
   int listarCalls = 0;
+  String? ultimoStatus;
 
   @override
   Future<PaginatedResult<RomaneioModel>> listarRomaneiosPaginado({
@@ -28,6 +31,7 @@ class FakeRomaneioService extends RomaneioService {
     bool includeDeleted = false,
   }) async {
     listarCalls++;
+    ultimoStatus = status;
     if (erroAoListar != null) throw erroAoListar!;
     return resultado ??
         PaginatedResult(
@@ -72,17 +76,22 @@ PaginatedResult<RomaneioModel> _page(List<RomaneioModel> items) {
 void main() {
   group('RomaneioViewModel', () {
     late FakeRomaneioService service;
+    late FakeDashboardService dashboardService;
 
     setUp(() {
       service = FakeRomaneioService();
+      dashboardService = FakeDashboardService();
     });
+
+    RomaneioViewModel buildVm() =>
+        RomaneioViewModel(service, dashboardService);
 
     test('loadRomaneios com filtro específico popula a lista', () async {
       service.resultado = _page([
         _romaneio(id: 1, status: RomaneioStatus.concluido, totalFaturado: 300),
       ]);
 
-      final vm = RomaneioViewModel(service)..setStatusFiltro('concluido');
+      final vm = buildVm()..setStatusFiltro('concluido');
       await vm.loadRomaneios();
 
       expect(vm.state, ViewState.success);
@@ -90,38 +99,46 @@ void main() {
       expect(service.listarCalls, 1);
     });
 
-    test('filtro "Em aberto" exclui concluídos e cancelados', () async {
+    test('filtro "Em rota" consulta API com status em_rota', () async {
       service.resultado = _page([
-        _romaneio(id: 1, status: RomaneioStatus.rascunho),
-        _romaneio(id: 2, status: RomaneioStatus.emRota),
-        _romaneio(id: 3, status: RomaneioStatus.concluido),
-        _romaneio(id: 4, status: RomaneioStatus.cancelado),
+        _romaneio(id: 1, status: RomaneioStatus.emRota),
       ]);
 
-      final vm = RomaneioViewModel(service);
+      final vm = buildVm();
       await vm.loadRomaneios();
 
-      expect(vm.romaneios, hasLength(2));
-      expect(
-        vm.romaneios.map((r) => r.status),
-        containsAll([RomaneioStatus.rascunho, RomaneioStatus.emRota]),
-      );
+      expect(vm.romaneios, hasLength(1));
+      expect(vm.statusFiltro, 'em_rota');
+      expect(service.ultimoStatus, 'em_rota');
+      expect(service.listarCalls, 1);
     });
 
-    test('totalFaturadoListagem soma o faturamento dos romaneios', () async {
+    test('totalFaturadoListagem usa totais da API e não soma itens carregados',
+        () async {
       service.resultado = _page([
-        _romaneio(id: 1, status: RomaneioStatus.rascunho, totalFaturado: 120.5),
+        _romaneio(id: 1, status: RomaneioStatus.emRota, totalFaturado: 120.5),
         _romaneio(id: 2, status: RomaneioStatus.emRota, totalFaturado: 80.0),
       ]);
+      dashboardService.totaisResultado = const DashboardTotaisModel(
+        pedidos: DashboardTotaisPedidos.vazio,
+        romaneios: DashboardTotaisRomaneios(
+          resumo: DashboardTotaisResumo(
+            quantidade: 25,
+            valorTotal: 39000.9,
+          ),
+        ),
+      );
 
-      final vm = RomaneioViewModel(service);
+      final vm = buildVm();
       await vm.loadRomaneios();
 
-      expect(vm.totalFaturadoListagem, 200.5);
+      expect(vm.totalFaturadoListagem, 39000.9);
+      expect(dashboardService.buscarTotaisCalls, 1);
+      expect(dashboardService.ultimosFiltrosTotais?.status, 'em_rota');
     });
 
     test('setStatusFiltro e setIncludeDeleted notificam e ignoram repetido', () {
-      final vm = RomaneioViewModel(service);
+      final vm = buildVm();
       var notificacoes = 0;
       vm.addListener(() => notificacoes++);
 
@@ -138,7 +155,7 @@ void main() {
     test('loadRomaneios define estado de erro quando service falha', () async {
       service.erroAoListar = const AppException(message: 'Falha de rede');
 
-      final vm = RomaneioViewModel(service);
+      final vm = buildVm();
       await vm.loadRomaneios();
 
       expect(vm.state, ViewState.error);

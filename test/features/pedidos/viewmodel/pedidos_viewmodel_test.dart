@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:erp_alianca_dev/core/errors/app_exception.dart';
 import 'package:erp_alianca_dev/features/pedidos/model/pedido_model.dart';
 import 'package:erp_alianca_dev/features/pedidos/viewmodel/pedidos_viewmodel.dart';
+import 'package:erp_alianca_dev/shared/models/dashboard_totais_model.dart';
 import 'package:erp_alianca_dev/shared/models/base_state.dart';
 import 'package:erp_alianca_dev/shared/models/paginated_result.dart';
 
@@ -26,14 +27,19 @@ void main() {
   group('PedidosViewModel', () {
     late FakePedidoService pedidoService;
     late FakeClienteService clienteService;
+    late FakeDashboardService dashboardService;
 
     setUp(() {
       pedidoService = FakePedidoService();
       clienteService = FakeClienteService();
+      dashboardService = FakeDashboardService();
     });
 
-    PedidosViewModel buildVm() =>
-        PedidosViewModel(pedidoService, clienteService);
+    PedidosViewModel buildVm() => PedidosViewModel(
+          pedidoService,
+          clienteService,
+          dashboardService,
+        );
 
     test('loadPedidos popula lista e resolve nomes de clientes', () async {
       clienteService.nomes[10] = 'Padaria Central';
@@ -57,7 +63,8 @@ void main() {
       expect(pedidoService.listarCalls, 1);
     });
 
-    test('totalGeralListagem soma o total dos pedidos carregados', () async {
+    test('totalGeralListagem usa totais da API e não soma itens carregados',
+        () async {
       pedidoService.resultado = PaginatedResult(
         items: [
           _pedido(idPedido: 1, idCliente: 1, total: 100.5),
@@ -68,11 +75,22 @@ void main() {
         total: 2,
         hasMore: false,
       );
+      dashboardService.totaisResultado = const DashboardTotaisModel(
+        pedidos: DashboardTotaisPedidos(
+          resumo: DashboardTotaisResumo(
+            quantidade: 152,
+            valorTotal: 48750.9,
+          ),
+        ),
+        romaneios: DashboardTotaisRomaneios.vazio,
+      );
 
       final vm = buildVm();
       await vm.loadPedidos();
 
-      expect(vm.totalGeralListagem, 200.0);
+      expect(vm.totalGeralListagem, 48750.9);
+      expect(dashboardService.buscarTotaisCalls, 1);
+      expect(dashboardService.ultimosFiltrosTotais?.status, 'confirmado');
     });
 
     test('setStatusFiltro altera o filtro e dispara notificação', () {

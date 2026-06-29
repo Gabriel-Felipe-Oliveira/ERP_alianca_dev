@@ -3,10 +3,9 @@ import 'package:erp_alianca_dev/shared/utils/app_validators.dart';
 /// Validadores centralizados do formulário de cliente (criar e editar).
 /// ViewModels e Views devem usar estes métodos para manter regras em um só lugar.
 abstract class ClienteValidator {
-  /// Validador de nome no modo criar (label depende de CPF/CNPJ).
+  /// Validador de nome no modo criar.
   static String? Function(String?) nomeCriar(bool isCpf) {
-    final label = isCpf ? 'Nome completo' : 'Nome da empresa';
-    return (String? v) => AppValidators.obrigatorio(v, label);
+    return (String? v) => AppValidators.obrigatorio(v, 'Nome completo');
   }
 
   /// Validador de documento (CPF ou CNPJ) no modo criar.
@@ -52,9 +51,8 @@ abstract class ClienteValidator {
   /// Retorna lista de labels dos campos obrigatórios faltantes no modo criar.
   /// No criar apenas o nome é obrigatório.
   static List<String> camposFaltantesCriar(bool isCpf, String? nome) {
-    final label = isCpf ? 'Nome completo' : 'Nome da empresa';
-    if (AppValidators.obrigatorio(nome, label) != null) {
-      return [label];
+    if (AppValidators.obrigatorio(nome, 'Nome completo') != null) {
+      return ['Nome completo'];
     }
     return [];
   }

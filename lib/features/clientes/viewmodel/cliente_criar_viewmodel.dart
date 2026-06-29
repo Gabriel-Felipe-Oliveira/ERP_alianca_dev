@@ -72,6 +72,18 @@ class ClienteCriarViewModel extends BaseViewModel {
   String _status = 'Ativo';
   String get status => _status;
 
+  DateTime? _dataNascimento;
+  DateTime? get dataNascimento => _dataNascimento;
+  set dataNascimento(DateTime? value) {
+    _dataNascimento = value;
+    if (!isDisposed) notifyListeners();
+  }
+
+  void limparDataNascimento() {
+    _dataNascimento = null;
+    if (!isDisposed) notifyListeners();
+  }
+
   bool _abrirPedidoAposSalvar = false;
   String _rotaVoltar = AppRoutes.clientes;
   ClienteModel? _clienteParaPedido;
@@ -99,8 +111,9 @@ class ClienteCriarViewModel extends BaseViewModel {
     _isCpf = false;
     documentController.text =
         ClienteModel.documentoMascaradoParaCampo('cnpj', dados.cnpj);
-    nomeController.text = dados.razaoSocial;
-    nomeEmpresaController.text = dados.nomeFantasia?.trim() ?? '';
+    nomeController.clear();
+    nomeEmpresaController.clear();
+    nomeResponsavelController.text = dados.razaoSocial;
     _preencherTelefone(dados.telefone);
     emailController.text = dados.email;
     cepController.text = _formatarCep(dados.cep);
@@ -165,6 +178,7 @@ class ClienteCriarViewModel extends BaseViewModel {
     if (FormUtils.safeText(bairroController).isNotEmpty) return true;
     if (FormUtils.safeText(cidadeController).isNotEmpty) return true;
     if (FormUtils.safeText(estadoController).isNotEmpty) return true;
+    if (_dataNascimento != null) return true;
     if (_status != 'Ativo') return true;
     return false;
   }
@@ -224,6 +238,7 @@ class ClienteCriarViewModel extends BaseViewModel {
       'cidade': FormUtils.safeText(cidadeController),
       'estado': FormUtils.safeText(estadoController),
       'status': _status,
+      'dataNascimento': _dataNascimento?.toIso8601String(),
     };
   }
 
@@ -258,6 +273,9 @@ class ClienteCriarViewModel extends BaseViewModel {
       bairroController.text = map['bairro'] as String? ?? '';
       cidadeController.text = map['cidade'] as String? ?? '';
       estadoController.text = map['estado'] as String? ?? '';
+      final dataRaw = map['dataNascimento'] as String?;
+      _dataNascimento =
+          dataRaw != null && dataRaw.isNotEmpty ? DateTime.tryParse(dataRaw) : null;
       final s = map['status'] as String?;
       if (s == 'Ativo' || s == 'Inativo') _status = s!;
       _temClienteCopiado = false;
@@ -283,6 +301,7 @@ class ClienteCriarViewModel extends BaseViewModel {
     bairroController.clear();
     cidadeController.clear();
     estadoController.clear();
+    _dataNascimento = null;
     _status = 'Ativo';
     _errorMessage = null;
     _temClienteCopiado = false;
@@ -302,8 +321,10 @@ class ClienteCriarViewModel extends BaseViewModel {
         tipoDocumento: _isCpf ? 'cpf' : 'cnpj',
         documentoDigits: _documentoDigits,
         nome: FormUtils.safeText(nomeController),
-        nomeEmpresa: _trimEmptyToNull(FormUtils.safeText(nomeEmpresaController)),
-        nomeResponsavel: _isCpf ? null : _trimEmptyToNull(FormUtils.safeText(nomeResponsavelController)),
+        nomeEmpresa: _isCpf
+            ? _trimEmptyToNull(FormUtils.safeText(nomeEmpresaController))
+            : _trimEmptyToNull(FormUtils.safeText(nomeResponsavelController)),
+        nomeResponsavel: null,
         telefone: telefoneCompleto,
         email: FormUtils.safeText(emailController),
         cep: FormUtils.safeText(cepController),
@@ -313,6 +334,7 @@ class ClienteCriarViewModel extends BaseViewModel {
         cidade: FormUtils.safeText(cidadeController),
         estado: FormUtils.safeText(estadoController),
         status: _status,
+        dataNascimento: _dataNascimento,
       );
       final model = values.toModel(_empresaService.idEmpresa);
       final documentoSalvo = _documentoDigits;

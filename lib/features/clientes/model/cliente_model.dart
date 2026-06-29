@@ -1,7 +1,10 @@
+import 'package:erp_alianca_dev/shared/utils/app_formatters.dart';
+
 /// Model de dados do cliente (formulário e API).
 /// [tipoDocumento]: 'cpf' ou 'cnpj'. [documento]: apenas dígitos (11 ou 14).
 /// [nomeResponsavel]: opcional, usado quando tipoDocumento é 'cnpj'.
 /// [nomeEmpresa]: opcional; se vazio enviamos '' na requisição.
+/// [dataNascimento]: opcional; API usa formato dd/MM/yyyy.
 class ClienteModel {
   /// Opções de status para dropdown (criar/editar).
   static const List<String> statusOpcoes = ['Ativo', 'Inativo'];
@@ -21,6 +24,7 @@ class ClienteModel {
   final String cidade;
   final String estado;
   final String status;
+  final DateTime? dataNascimento;
 
   const ClienteModel({
     this.id,
@@ -39,6 +43,7 @@ class ClienteModel {
     required this.cidade,
     required this.estado,
     this.status = 'Ativo',
+    this.dataNascimento,
   });
 
   /// Status no formato da API: "ativa" ou "inativa".
@@ -98,6 +103,9 @@ class ClienteModel {
       cidade: json['cidade'] as String? ?? '',
       estado: json['estado'] as String? ?? '',
       status: statusNorm,
+      dataNascimento: parseDataNascimentoApi(
+        json['data_nascimento'] as String? ?? json['dataNascimento'] as String?,
+      ),
     );
   }
 
@@ -131,6 +139,9 @@ class ClienteModel {
         nomeResponsavel != null &&
         nomeResponsavel!.trim().isNotEmpty) {
       payload['nome_responsavel'] = nomeResponsavel!.trim();
+    }
+    if (dataNascimento != null) {
+      payload['data_nascimento'] = formatarDataNascimentoApi(dataNascimento!);
     }
     return payload;
   }

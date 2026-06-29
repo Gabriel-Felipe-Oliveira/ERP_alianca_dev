@@ -212,10 +212,14 @@ class _VendasBaseAppState extends State<VendasBaseApp> {
               create: (ctx) => PedidosViewModel(
                 ctx.read<PedidoService>(),
                 ctx.read<ClienteService>(),
+                ctx.read<DashboardService>(),
               ),
             ),
             ChangeNotifierProvider<RomaneioViewModel>(
-              create: (ctx) => RomaneioViewModel(ctx.read<RomaneioService>()),
+              create: (ctx) => RomaneioViewModel(
+                ctx.read<RomaneioService>(),
+                ctx.read<DashboardService>(),
+              ),
             ),
             ChangeNotifierProvider<DashboardComercialViewModel>(
               create: (ctx) =>
