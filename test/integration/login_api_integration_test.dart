@@ -1,3 +1,6 @@
+@Tags(['integration'])
+library;
+
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -33,7 +36,6 @@ Dio _createLiveDio() {
 }
 
 /// Testes contra a API real. Credenciais: [TestAuthCredentials].
-@Tags(['integration'])
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = null;

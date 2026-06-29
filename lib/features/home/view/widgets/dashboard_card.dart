@@ -39,7 +39,12 @@ class _DashboardCardState extends State<DashboardCard> {
           duration: DashboardCardConstants.hoverDuration,
           transform: _hovering
               ? (Matrix4.identity()
-                ..scale(DashboardCardConstants.hoverScale))
+                ..scaleByDouble(
+                  DashboardCardConstants.hoverScale,
+                  DashboardCardConstants.hoverScale,
+                  1.0,
+                  1.0,
+                ))
               : Matrix4.identity(),
           child: InkWell(
             borderRadius:

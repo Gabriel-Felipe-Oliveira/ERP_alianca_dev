@@ -159,13 +159,13 @@ class _ClientTileState extends State<ClientTile> {
                     AppTooltip(
                       message: 'Novo pedido',
                       child: Material(
-                        color: AppColors.primary.withOpacity(0.18),
+                        color: AppColors.primary.withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(AppRadius.small),
                         child: InkWell(
                           onTap: () => widget.onNovoPedido!(widget.cliente),
                           borderRadius: BorderRadius.circular(AppRadius.small),
-                          splashColor: AppColors.primary.withOpacity(0.2),
-                          highlightColor: AppColors.primary.withOpacity(0.1),
+                          splashColor: AppColors.primary.withValues(alpha: 0.2),
+                          highlightColor: AppColors.primary.withValues(alpha: 0.1),
                           child: Padding(
                             padding: const EdgeInsets.all(8),
                             child: Icon(

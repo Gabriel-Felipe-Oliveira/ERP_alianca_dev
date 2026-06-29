@@ -93,7 +93,7 @@ class _PedidoSelecaoClienteModalState extends State<PedidoSelecaoClienteModal> {
     return ListView.separated(
       padding: const EdgeInsets.only(right: AppSpacing.xs),
       itemCount: vm.clientesBusca.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 4),
+      separatorBuilder: (_, _) => const SizedBox(height: 4),
       itemBuilder: (context, index) {
         final cliente = vm.clientesBusca[index];
         final codigo = cliente.id != null

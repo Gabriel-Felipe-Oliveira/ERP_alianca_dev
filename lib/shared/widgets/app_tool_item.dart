@@ -51,9 +51,9 @@ class _AppToolItemState extends State<AppToolItem> {
         hasAccent = true;
         backgroundColor = widget.enabled
             ? (_hovering
-                ? AppColors.success.withOpacity(0.35)
-                : AppColors.success.withOpacity(0.22))
-            : AppColors.success.withOpacity(0.08);
+                ? AppColors.success.withValues(alpha: 0.35)
+                : AppColors.success.withValues(alpha: 0.22))
+            : AppColors.success.withValues(alpha: 0.08);
         break;
       case AppToolPanelItemVariant.danger:
         hasAccent = true;
@@ -64,7 +64,7 @@ class _AppToolItemState extends State<AppToolItem> {
           color = AppColors.textPrimary;
           backgroundColor = widget.enabled
               ? AppColors.toolPanelItemDangerBackground
-              : AppColors.toolPanelItemDangerBackground.withOpacity(0.5);
+              : AppColors.toolPanelItemDangerBackground.withValues(alpha: 0.5);
         }
         break;
       case AppToolPanelItemVariant.neutral:
@@ -72,27 +72,27 @@ class _AppToolItemState extends State<AppToolItem> {
         hasAccent = true;
         backgroundColor = widget.enabled
             ? (_hovering
-                ? AppColors.primary.withOpacity(0.12)
+                ? AppColors.primary.withValues(alpha: 0.12)
                 : AppColors.toolPanelItemLightBackground)
-            : AppColors.toolPanelItemLightBackground.withOpacity(0.5);
+            : AppColors.toolPanelItemLightBackground.withValues(alpha: 0.5);
         break;
       case AppToolPanelItemVariant.primary:
         color = AppColors.primary;
         hasAccent = true;
         backgroundColor = widget.enabled
             ? (_hovering
-                ? AppColors.primary.withOpacity(0.35)
-                : AppColors.primary.withOpacity(0.22))
-            : AppColors.primary.withOpacity(0.08);
+                ? AppColors.primary.withValues(alpha: 0.35)
+                : AppColors.primary.withValues(alpha: 0.22))
+            : AppColors.primary.withValues(alpha: 0.08);
         break;
       case AppToolPanelItemVariant.primaryOnDark:
         color = AppColors.primary;
         hasAccent = true;
         backgroundColor = widget.enabled
             ? (_hovering
-                ? AppColors.primary.withOpacity(0.2)
+                ? AppColors.primary.withValues(alpha: 0.2)
                 : AppColors.toolPanelItemDarkBackground)
-            : AppColors.toolPanelItemDarkBackground.withOpacity(0.6);
+            : AppColors.toolPanelItemDarkBackground.withValues(alpha: 0.6);
         break;
       case AppToolPanelItemVariant.primaryFilled:
         hasAccent = true;
@@ -103,7 +103,7 @@ class _AppToolItemState extends State<AppToolItem> {
           color = AppColors.textPrimary;
           backgroundColor = widget.enabled
               ? AppColors.primary
-              : AppColors.primary.withOpacity(0.5);
+              : AppColors.primary.withValues(alpha: 0.5);
         }
         break;
       case null:
@@ -117,14 +117,14 @@ class _AppToolItemState extends State<AppToolItem> {
         backgroundColor = hasAccent
             ? (widget.enabled
                 ? (_hovering
-                    ? (widget.accentColor!).withOpacity(0.35)
-                    : (widget.accentColor!).withOpacity(0.22))
-                : (widget.accentColor!).withOpacity(0.08))
+                    ? (widget.accentColor!).withValues(alpha: 0.35)
+                    : (widget.accentColor!).withValues(alpha: 0.22))
+                : (widget.accentColor!).withValues(alpha: 0.08))
             : (_hovering ? AppColors.actionBarHover : Colors.transparent);
         break;
     }
 
-    final borderColor = hasAccent && widget.enabled ? color.withOpacity(0.5) : null;
+    final borderColor = hasAccent && widget.enabled ? color.withValues(alpha: 0.5) : null;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovering = true),
@@ -167,7 +167,7 @@ class _AppToolItemState extends State<AppToolItem> {
   Widget _buildExpandedContent(Color color) {
     final barColor = widget.enabled
         ? color
-        : AppColors.textSecondary.withOpacity(0.4);
+        : AppColors.textSecondary.withValues(alpha: 0.4);
     return Row(
       children: [
         AnimatedContainer(
@@ -185,7 +185,7 @@ class _AppToolItemState extends State<AppToolItem> {
           size: 20,
           color: widget.enabled
               ? color
-              : AppColors.textSecondary.withOpacity(0.4),
+              : AppColors.textSecondary.withValues(alpha: 0.4),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -194,7 +194,7 @@ class _AppToolItemState extends State<AppToolItem> {
             style: AppTextStyles.bodyMedium.copyWith(
               color: widget.enabled
                   ? color
-                  : AppColors.textSecondary.withOpacity(0.4),
+                  : AppColors.textSecondary.withValues(alpha: 0.4),
               fontWeight: widget.isPrimary ? FontWeight.w600 : FontWeight.w500,
             ),
           ),
@@ -210,7 +210,7 @@ class _AppToolItemState extends State<AppToolItem> {
         size: 20,
         color: widget.enabled
             ? color
-            : AppColors.textSecondary.withOpacity(0.4),
+            : AppColors.textSecondary.withValues(alpha: 0.4),
       ),
     );
   }

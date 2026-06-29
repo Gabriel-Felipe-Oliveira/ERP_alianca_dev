@@ -199,7 +199,9 @@ class PedidoDetalhesViewModel extends BaseViewModel
         if (cabecalho.isNotEmpty) {
           _pedido = cabecalho.first;
         }
-      } catch (_) {}
+      } catch (_) {
+        // Cabeçalho é complementar: mantém o pedido recebido por argumento.
+      }
       _nomesProdutos.clear();
       final idsUnicos = lista.map((e) => e.idProduto).toSet();
       for (final id in idsUnicos) {

@@ -40,6 +40,7 @@ class ThemePaletteProvider extends ChangeNotifier {
 
   ThemeData get darkThemeData => AppTheme.darkFromPalette(_basePalette);
 
+  @override
   void notifyListeners() {
     if (!_disposed) super.notifyListeners();
   }

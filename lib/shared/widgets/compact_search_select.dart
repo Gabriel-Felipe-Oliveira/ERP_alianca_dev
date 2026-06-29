@@ -148,8 +148,8 @@ class _CompactSearchSelectState<T> extends State<CompactSearchSelect<T>> {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: 3,
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
-        itemBuilder: (_, __) => const AppShimmer(
+        separatorBuilder: (_, _) => const SizedBox(height: 8),
+        itemBuilder: (_, _) => const AppShimmer(
           width: double.infinity,
           height: 40,
         ),
@@ -191,7 +191,7 @@ class _CompactSearchSelectState<T> extends State<CompactSearchSelect<T>> {
       ),
       physics: const ClampingScrollPhysics(),
       itemCount: items.length,
-      separatorBuilder: (_, __) => Divider(
+      separatorBuilder: (_, _) => Divider(
         height: 1,
         color: AppColors.border,
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:erp_alianca_dev/core/utils/app_logger.dart';
 import 'package:erp_alianca_dev/features/pedidos/model/pedido_model.dart';
 import 'package:erp_alianca_dev/features/romaneio/model/produto_agregado.dart';
 import 'package:erp_alianca_dev/shared/services/cliente_service.dart';
@@ -116,11 +117,17 @@ mixin RomaneioDetalhePedidosMixin on ChangeNotifier {
             if (nome.isNotEmpty) {
               nomesClientesPorPedido[p.idPedido] = nome;
             }
-          } catch (_) {}
+          } catch (e) {
+            AppLogger.debug(
+                'Falha ao resolver nome do cliente ${p.idCliente}: $e',
+                tag: 'RomaneioDetalhePedidos');
+          }
         }
       }
       await carregarNomesProdutos();
-    } catch (_) {
+    } catch (e) {
+      AppLogger.debug('Falha ao carregar pedidos do romaneio: $e',
+          tag: 'RomaneioDetalhePedidos');
       pedidosDoRomaneioInterno = [];
       itensPorPedido.clear();
       nomesClientesPorPedido.clear();
@@ -144,7 +151,10 @@ mixin RomaneioDetalhePedidosMixin on ChangeNotifier {
         if (produto != null && produto.nome.isNotEmpty) {
           nomesProdutos[id] = produto.nome;
         }
-      } catch (_) {}
+      } catch (e) {
+        AppLogger.debug('Falha ao resolver nome do produto $id: $e',
+            tag: 'RomaneioDetalhePedidos');
+      }
     }
   }
 }

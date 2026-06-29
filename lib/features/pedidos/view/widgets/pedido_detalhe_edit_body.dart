@@ -178,7 +178,7 @@ class _PainelProdutosEscolhidos extends StatelessWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: vm.itens.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 6),
+              separatorBuilder: (_, _) => const SizedBox(height: 6),
               itemBuilder: (context, index) {
                 final item = vm.itens[index];
                 return PedidoItemRow(

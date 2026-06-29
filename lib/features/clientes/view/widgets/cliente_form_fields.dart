@@ -45,36 +45,38 @@ abstract class ClienteFormFields {
         style: AppTextStyles.sectionTitleSecondary,
       ),
       const SizedBox(height: _fieldSpacing),
-      Wrap(
-        spacing: AppSpacing.lg,
-        runSpacing: AppSpacing.sm,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Radio<bool>(
-                value: true,
-                groupValue: vm.isCpf,
-                onChanged: (_) => vm.isCpf = true,
-                activeColor: AppColors.primary,
-              ),
-              Text('CPF', style: AppTextStyles.bodyMedium),
-            ],
-          ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Radio<bool>(
-                value: false,
-                groupValue: vm.isCpf,
-                onChanged: (_) => vm.isCpf = false,
-                activeColor: AppColors.primary,
-              ),
-              Text('CNPJ', style: AppTextStyles.bodyMedium),
-            ],
-          ),
-        ],
+      RadioGroup<bool>(
+        groupValue: vm.isCpf,
+        onChanged: (value) {
+          if (value != null) vm.isCpf = value;
+        },
+        child: Wrap(
+          spacing: AppSpacing.lg,
+          runSpacing: AppSpacing.sm,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Radio<bool>(
+                  value: true,
+                  activeColor: AppColors.primary,
+                ),
+                Text('CPF', style: AppTextStyles.bodyMedium),
+              ],
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Radio<bool>(
+                  value: false,
+                  activeColor: AppColors.primary,
+                ),
+                Text('CNPJ', style: AppTextStyles.bodyMedium),
+              ],
+            ),
+          ],
+        ),
       ),
       const SizedBox(height: _fieldSpacing),
       AppTextField(

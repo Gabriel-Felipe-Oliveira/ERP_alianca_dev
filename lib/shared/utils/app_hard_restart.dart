@@ -34,7 +34,6 @@ abstract final class AppHardRestart {
     if (launched) {
       await Future<void>.delayed(const Duration(milliseconds: 250));
       exit(0);
-      return;
     }
 
     await _runSoftRestart();

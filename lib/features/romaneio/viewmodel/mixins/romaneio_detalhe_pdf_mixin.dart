@@ -111,7 +111,11 @@ mixin RomaneioDetalhePdfMixin on ChangeNotifier {
           nomeCliente =
               cliente.nome.trim().isNotEmpty ? cliente.nome : '—';
           enderecoCliente = formatarEnderecoRecibo(cliente);
-        } catch (_) {}
+        } catch (e) {
+          AppLogger.debug(
+              'Falha ao resolver cliente ${pedido.idCliente} no cupom: $e',
+              tag: 'RomaneioDetalhePdf');
+        }
       }
       final pedidoCupom = PedidoCupomBuilder.build(
         idPedido: pedido.idPedido,
@@ -161,7 +165,9 @@ mixin RomaneioDetalhePdfMixin on ChangeNotifier {
       final bytes = await File(outputPath).readAsBytes();
       try {
         await File(outputPath).delete();
-      } catch (_) {}
+      } catch (_) {
+        // best-effort: arquivo temporário será limpo pelo SO se persistir.
+      }
       return bytes;
     } catch (e, st) {
       AppLogger.error(

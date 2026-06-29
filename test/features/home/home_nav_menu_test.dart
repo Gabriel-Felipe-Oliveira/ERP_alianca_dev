@@ -9,7 +9,7 @@ import 'package:erp_alianca_dev/shared/services/empresa_service.dart';
 import 'package:erp_alianca_dev/shared/services/local_storage_service.dart';
 
 void main() {
-  AuthService _authWithPerfil(String perfil) {
+  AuthService authWithPerfil(String perfil) {
     final empresaService = EmpresaService();
     final auth = AuthService(
       authStorage: AuthStorageService(LocalStorageService()),
@@ -52,19 +52,19 @@ void main() {
     return auth;
   }
 
-  bool _temSecaoDashboard(AuthService auth) {
+  bool temSecaoDashboard(AuthService auth) {
     return HomeNavMenu.sectionsFor(auth).any((s) => s.title == 'Dashboard');
   }
 
   test('admin vê card Dashboard na Home', () {
-    expect(_temSecaoDashboard(_authWithPerfil('admin')), isTrue);
+    expect(temSecaoDashboard(authWithPerfil('admin')), isTrue);
   });
 
   test('gerente vê card Dashboard na Home', () {
-    expect(_temSecaoDashboard(_authWithPerfil('gerente')), isTrue);
+    expect(temSecaoDashboard(authWithPerfil('gerente')), isTrue);
   });
 
   test('operador não vê card Dashboard na Home', () {
-    expect(_temSecaoDashboard(_authWithPerfil('operador')), isFalse);
+    expect(temSecaoDashboard(authWithPerfil('operador')), isFalse);
   });
 }

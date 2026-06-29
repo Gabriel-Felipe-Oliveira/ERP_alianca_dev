@@ -28,7 +28,7 @@ class AppLogo extends StatelessWidget {
         width: width,
         height: height,
         fit: fit,
-        errorBuilder: (_, __, ___) => _buildFallback(context),
+        errorBuilder: (_, _, _) => _buildFallback(context),
       );
     }
     return _buildFallback(context);

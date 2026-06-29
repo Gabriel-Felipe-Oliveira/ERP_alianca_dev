@@ -75,7 +75,10 @@ class RealtimeService {
     _subscription = null;
     try {
       await _channel?.sink.close();
-    } catch (_) {}
+    } catch (e) {
+      AppLogger.debug('Falha ao fechar canal (já encerrado?): $e',
+          tag: 'RealtimeService');
+    }
     _channel = null;
     _connectedEmpresaId = null;
     _joinRef = null;

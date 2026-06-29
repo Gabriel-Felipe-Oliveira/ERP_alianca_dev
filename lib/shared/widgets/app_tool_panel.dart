@@ -86,13 +86,13 @@ class AppToolPanel extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppSpacing.toolPanelBorderRadius),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
         ],
         border: Border.all(
-          color: Colors.white.withOpacity(0.04),
+          color: Colors.white.withValues(alpha: 0.04),
         ),
       ),
       child: Column(

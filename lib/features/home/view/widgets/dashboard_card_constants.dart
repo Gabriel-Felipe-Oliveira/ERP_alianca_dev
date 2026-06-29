@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:erp_alianca_dev/shared/theme/app_colors.dart';
-import 'package:erp_alianca_dev/shared/theme/app_spacing.dart';
 
 /// Constantes visuais e de layout do [DashboardCard].
 class DashboardCardConstants {

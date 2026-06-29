@@ -25,7 +25,7 @@ class FilterItem extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Material(
-        color: selected ? AppColors.primary.withOpacity(0.25) : Colors.transparent,
+        color: selected ? AppColors.primary.withValues(alpha: 0.25) : Colors.transparent,
         borderRadius: BorderRadius.circular(10),
         child: InkWell(
           onTap: onTap,

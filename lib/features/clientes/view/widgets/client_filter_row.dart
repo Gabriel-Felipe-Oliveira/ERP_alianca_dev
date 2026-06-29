@@ -72,12 +72,12 @@ class _FilterPill extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             color: isActive
-                ? AppColors.primary.withOpacity(0.18)
-                : Colors.white.withOpacity(0.06),
+                ? AppColors.primary.withValues(alpha: 0.18)
+                : Colors.white.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(pillRadius),
             border: isActive
                 ? Border.all(
-                    color: AppColors.primary.withOpacity(0.35),
+                    color: AppColors.primary.withValues(alpha: 0.35),
                     width: 1,
                   )
                 : Border.all(
@@ -106,8 +106,8 @@ class _FilterPill extends StatelessWidget {
                     fontSize: 12,
                     fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
                     color: isActive
-                        ? AppColors.primary.withOpacity(0.9)
-                        : AppColors.textSecondary.withOpacity(0.9),
+                        ? AppColors.primary.withValues(alpha: 0.9)
+                        : AppColors.textSecondary.withValues(alpha: 0.9),
                   ),
                 ),
               ],

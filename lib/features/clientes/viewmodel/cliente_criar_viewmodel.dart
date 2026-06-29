@@ -348,7 +348,9 @@ class ClienteCriarViewModel extends BaseViewModel {
           return cliente;
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      BaseViewModel.logFailure(e, tag: 'ClienteCriar.buscarPorDocumento');
+    }
     return null;
   }
 }

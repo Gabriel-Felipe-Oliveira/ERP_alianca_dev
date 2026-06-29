@@ -1,0 +1,174 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:erp_alianca_dev/core/errors/app_exception.dart';
+import 'package:erp_alianca_dev/core/network/dio_client.dart';
+import 'package:erp_alianca_dev/features/clientes/model/cliente_model.dart';
+import 'package:erp_alianca_dev/features/pedidos/model/pedido_model.dart';
+import 'package:erp_alianca_dev/features/pedidos/viewmodel/pedidos_viewmodel.dart';
+import 'package:erp_alianca_dev/shared/models/base_state.dart';
+import 'package:erp_alianca_dev/shared/models/paginated_result.dart';
+import 'package:erp_alianca_dev/shared/services/cliente_service.dart';
+import 'package:erp_alianca_dev/shared/services/empresa_service.dart';
+import 'package:erp_alianca_dev/shared/services/pedido_service.dart';
+
+import '../../../helpers/mock_dio_client.dart';
+
+DioClient _bareClient() =>
+    DioClient(EmpresaService(), createTestAuthService(EmpresaService()));
+
+class FakePedidoService extends PedidoService {
+  FakePedidoService() : super(_bareClient());
+
+  PaginatedResult<PedidoListagemModel>? resultado;
+  AppException? erroAoListar;
+  int listarCalls = 0;
+
+  @override
+  Future<PaginatedResult<PedidoListagemModel>> listarPedidosPaginado({
+    required int page,
+    int limit = 20,
+    String? status,
+    int? idCliente,
+  }) async {
+    listarCalls++;
+    if (erroAoListar != null) throw erroAoListar!;
+    return resultado ??
+        PaginatedResult(
+          items: const [],
+          page: page,
+          limit: limit,
+          total: 0,
+          hasMore: false,
+        );
+  }
+}
+
+class FakeClienteService extends ClienteService {
+  FakeClienteService() : super(_bareClient());
+
+  final Map<int, String> nomes = {};
+
+  @override
+  Future<ClienteModel> buscarClientePorId(int id) async {
+    return ClienteModel(
+      id: id,
+      nome: nomes[id] ?? 'Cliente $id',
+      telefone: '',
+      email: '',
+      cep: '',
+      logradouro: '',
+      numero: '',
+      bairro: '',
+      cidade: '',
+      estado: 'MG',
+    );
+  }
+}
+
+PedidoListagemModel _pedido({
+  required int idPedido,
+  required int idCliente,
+  required double total,
+  String status = 'confirmado',
+}) {
+  return PedidoListagemModel(
+    idPedido: idPedido,
+    idEmpresa: 1,
+    idCliente: idCliente,
+    status: status,
+    total: total,
+  );
+}
+
+void main() {
+  group('PedidosViewModel', () {
+    late FakePedidoService pedidoService;
+    late FakeClienteService clienteService;
+
+    setUp(() {
+      pedidoService = FakePedidoService();
+      clienteService = FakeClienteService();
+    });
+
+    PedidosViewModel buildVm() =>
+        PedidosViewModel(pedidoService, clienteService);
+
+    test('loadPedidos popula lista e resolve nomes de clientes', () async {
+      clienteService.nomes[10] = 'Padaria Central';
+      pedidoService.resultado = PaginatedResult(
+        items: [
+          _pedido(idPedido: 1, idCliente: 10, total: 150.0),
+          _pedido(idPedido: 2, idCliente: 10, total: 50.0),
+        ],
+        page: 1,
+        limit: 20,
+        total: 2,
+        hasMore: false,
+      );
+
+      final vm = buildVm();
+      await vm.loadPedidos();
+
+      expect(vm.state, ViewState.success);
+      expect(vm.pedidos, hasLength(2));
+      expect(vm.nomeCliente(10), 'Padaria Central');
+      expect(pedidoService.listarCalls, 1);
+    });
+
+    test('totalGeralListagem soma o total dos pedidos carregados', () async {
+      pedidoService.resultado = PaginatedResult(
+        items: [
+          _pedido(idPedido: 1, idCliente: 1, total: 100.5),
+          _pedido(idPedido: 2, idCliente: 2, total: 99.5),
+        ],
+        page: 1,
+        limit: 20,
+        total: 2,
+        hasMore: false,
+      );
+
+      final vm = buildVm();
+      await vm.loadPedidos();
+
+      expect(vm.totalGeralListagem, 200.0);
+    });
+
+    test('setStatusFiltro altera o filtro e dispara notificação', () {
+      final vm = buildVm();
+      var notificou = false;
+      vm.addListener(() => notificou = true);
+
+      vm.setStatusFiltro('cancelado');
+
+      expect(vm.statusFiltro, 'cancelado');
+      expect(notificou, isTrue);
+    });
+
+    test('setStatusFiltro ignora valor repetido', () {
+      final vm = buildVm();
+      vm.setStatusFiltro('organizado');
+      var notificou = false;
+      vm.addListener(() => notificou = true);
+
+      vm.setStatusFiltro('organizado');
+
+      expect(notificou, isFalse);
+    });
+
+    test('nomeCliente retorna traço para id não resolvido', () {
+      final vm = buildVm();
+      expect(vm.nomeCliente(999), '—');
+    });
+
+    test('loadPedidos define estado de erro quando service falha', () async {
+      pedidoService.erroAoListar =
+          const AppException(message: 'Falha de rede');
+
+      final vm = buildVm();
+      await vm.loadPedidos();
+
+      expect(vm.state, ViewState.error);
+      expect(vm.errorMessage, isNotEmpty);
+      expect(vm.pedidos, isEmpty);
+    });
+  });
+}

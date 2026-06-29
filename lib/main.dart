@@ -167,7 +167,9 @@ class _VendasBaseAppState extends State<VendasBaseApp> {
     if (ctx != null && ctx.mounted) {
       try {
         ctx.read<NavigationController>().limparHistorico();
-      } catch (_) {}
+      } catch (_) {
+        // best-effort durante reinício: provider pode não estar disponível.
+      }
     }
     if (mounted) {
       setState(() => _softRestartKey++);

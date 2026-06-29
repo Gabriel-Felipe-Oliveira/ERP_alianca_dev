@@ -164,7 +164,7 @@ class _RomaneioViewState extends State<RomaneioView> with RouteAware {
       return ListView.builder(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         itemCount: 8,
-        itemBuilder: (_, __) => const Padding(
+        itemBuilder: (_, _) => const Padding(
           padding: EdgeInsets.only(bottom: AppSpacing.sm),
           child: AppShimmer(
             width: double.infinity,

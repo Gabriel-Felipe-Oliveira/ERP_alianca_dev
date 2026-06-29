@@ -23,42 +23,44 @@ class MotoristaSection extends StatelessWidget {
           style: AppTextStyles.sectionTitleSecondary,
         ),
         const SizedBox(height: AppSpacing.fieldSpacingCompact),
-        Wrap(
-          spacing: AppSpacing.lg,
-          runSpacing: AppSpacing.sm,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Radio<TipoMotorista>(
-                  value: TipoMotorista.proprio,
-                  groupValue: vm.tipoMotorista,
-                  onChanged: (_) => vm.setTipoMotorista(TipoMotorista.proprio),
-                  activeColor: AppColors.primary,
-                ),
-                Text(
-                  TipoMotorista.proprio.label,
-                  style: AppTextStyles.bodyMedium,
-                ),
-              ],
-            ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Radio<TipoMotorista>(
-                  value: TipoMotorista.agregado,
-                  groupValue: vm.tipoMotorista,
-                  onChanged: (_) => vm.setTipoMotorista(TipoMotorista.agregado),
-                  activeColor: AppColors.primary,
-                ),
-                Text(
-                  TipoMotorista.agregado.label,
-                  style: AppTextStyles.bodyMedium,
-                ),
-              ],
-            ),
-          ],
+        RadioGroup<TipoMotorista>(
+          groupValue: vm.tipoMotorista,
+          onChanged: (value) {
+            if (value != null) vm.setTipoMotorista(value);
+          },
+          child: Wrap(
+            spacing: AppSpacing.lg,
+            runSpacing: AppSpacing.sm,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Radio<TipoMotorista>(
+                    value: TipoMotorista.proprio,
+                    activeColor: AppColors.primary,
+                  ),
+                  Text(
+                    TipoMotorista.proprio.label,
+                    style: AppTextStyles.bodyMedium,
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Radio<TipoMotorista>(
+                    value: TipoMotorista.agregado,
+                    activeColor: AppColors.primary,
+                  ),
+                  Text(
+                    TipoMotorista.agregado.label,
+                    style: AppTextStyles.bodyMedium,
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
         if (vm.tipoMotorista == TipoMotorista.proprio) ...[
           const SizedBox(height: AppSpacing.fieldSpacingCompact),
